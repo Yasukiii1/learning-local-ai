@@ -1,0 +1,37 @@
+Calculus Basics
+
+What Is Calculus?
+
+Calculus is the part of maths that studies change. Normal arithmetic is great for things that stay the same, like the price of 3 apples. Calculus helps with things that keep changing, like the speed of a car that is speeding up, or the amount of water in a bath that is filling. Calculus was developed in the 1600s by two people at about the same time: Isaac Newton in England and Gottfried Leibniz in Germany. Calculus has two main ideas: the derivative, which measures how fast something changes, and the integral, which adds up lots of tiny pieces to find a total.
+
+Functions and Graphs
+
+Calculus works with functions. A function is a rule that turns one number into another number. For example, the function f(x) = 2x doubles any number you give it, so f(3) = 6. The number you put in is called the input, usually written as x, and the number that comes out is called the output. We can draw a function as a graph. The input goes along the horizontal x-axis and the output goes up the vertical y-axis. A straight line graph means the function changes at a steady rate. A curved graph means the rate of change is different at different points.
+
+Slope and Rate of Change
+
+The slope of a line tells us how steep it is. Slope is found by dividing the change in y by the change in x, which people often call "rise over run". If a line goes up 6 while it goes across 2, its slope is 6 divided by 2, which is 3. A positive slope means the line goes up from left to right, a negative slope means it goes down, and a slope of zero means the line is flat. The slope is a rate of change. For example, if a car travels 120 kilometres in 2 hours, its average speed is 60 kilometres per hour. That speed is the slope of the graph of distance against time.
+
+Limits
+
+A curve does not have one slope everywhere, so we need a new idea to find its slope at a single point. This idea is called a limit. A limit is the value that something gets closer and closer to. Imagine walking halfway to a wall, then halfway again, and again. You get closer and closer to the wall, so the wall is the limit of your position, even if you never quite touch it. In calculus, we find the slope at one point by looking at two points on the curve and moving them closer and closer together. The limit of those slopes is the exact slope at that point.
+
+Derivatives
+
+The derivative of a function tells us its exact rate of change at any point. It is the slope of the curve at that point. The derivative of f(x) is written as f'(x), which is read "f prime of x", or as dy/dx. The derivative of position is velocity, which tells us how fast something is moving. The derivative of velocity is acceleration, which tells us how fast the speed is changing. There is a simple shortcut called the power rule. To find the derivative of x to a power, bring the power down to the front and lower the power by one. So the derivative of x squared is 2x, and the derivative of x cubed is 3x squared. The derivative of a number on its own, called a constant, is zero, because a constant never changes.
+
+Using Derivatives: Maximum and Minimum
+
+Derivatives help us find the highest and lowest points of a curve. At the very top of a hill or the very bottom of a valley on a graph, the curve is flat for a moment, so the slope there is zero. These flat points are called stationary points. A highest point is called a maximum and a lowest point is called a minimum. Engineers use this idea to design things with the least material, and businesses use it to find the price that gives the most profit.
+
+Integrals
+
+The integral is the second big idea of calculus. An integral adds up lots of tiny pieces to find a total. The most common use is finding the area under a curve. Imagine cutting the area under a curve into many thin rectangles. Adding up the areas of all the rectangles gives a good guess of the total area. The thinner the rectangles, the better the guess. The integral is the limit of this sum when the rectangles become super thin. The symbol for an integral is a tall, stretched letter S, which stands for "sum".
+
+The Fundamental Theorem of Calculus
+
+The fundamental theorem of calculus connects derivatives and integrals. It says that integration and differentiation are opposites, just like adding and subtracting are opposites. If you take the derivative of a function and then integrate it, you get back to the function you started with, plus a constant. This is why an integral is also called an antiderivative. For example, the derivative of x squared is 2x, so the integral of 2x is x squared plus a constant, written as C.
+
+Calculus in Real Life
+
+Calculus is used in many jobs. Physicists use it to describe how planets move and how objects fall. Engineers use it to design bridges, cars and rockets. Doctors and scientists use it to understand how fast a medicine spreads through the body or how quickly a population of animals grows. Computer game designers use it to make objects move realistically, and weather forecasters use it to predict how storms will change. Whenever something changes over time, calculus can help describe it.

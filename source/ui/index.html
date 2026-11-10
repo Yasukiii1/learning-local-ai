@@ -1,0 +1,2112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Classroom</title>
+<style>
+  :root {
+    --bg: #1e1f22; --panel: #2b2d31; --card: #313338; --card2: #383a40; --line: #3f4147;
+    --text: #dbdee1; --muted: #949ba4; --head: #f2f3f5; --blurple: #5865f2; --blurple2: #4752c4;
+    --green: #23a55a; --yellow: #f0b232; --red: #f23f43; --gold: #f5c542; --gold2: #b8860b;
+    --c1: #f47b67; --c2: #3ba55c; --c3: #b07bff; --c4: #faa61a; --c5: #00b0f4;
+    --bounce: cubic-bezier(.34, 1.56, .64, 1);
+    --t-explain_why: #7c8cff; --t-what_if: #c77dff; --t-compare: #4fc3f7; --t-fill_blank: #57d18b;
+    --t-pick_one: #ff9f43; --t-spot_mistake: #ff6b81; --t-challenge: var(--gold);
+    --t-lightning: #ff8a1f; --t-whos_right: #2dd4bf; --t-second_chance: #c9d1dc; --t-streak: #ff5a1f; --t-silver: #c9d1dc;
+  }
+  /* ⚡ lightning (orange) */
+  .card.bolt { background: linear-gradient(135deg, #3d2a17, #2f261d 70%); border-color: var(--t-lightning); }
+  .card.bolt.now { border-color: var(--t-lightning); box-shadow: 0 0 16px rgba(255,138,31,.35); animation: none; }
+  .card.bolt.now .tag { background: var(--t-lightning); color: #2a1300; }
+  .in-bolt { animation: inBolt .5s ease-out both; }
+  @keyframes inBolt { 0% { opacity: 0; transform: translateX(60px) skewX(-25deg); filter: brightness(3); }
+    40% { opacity: 1; transform: translateX(-6px) skewX(8deg); } 70% { transform: translateX(3px) skewX(-3deg); filter: brightness(1.4); }
+    100% { transform: none; filter: none; } }
+  /* 🥈 second chance (silver) */
+  .card.silver { background: linear-gradient(135deg, #f4f6f9 0%, #cfd5dd 45%, #a7b0bc 100%); border-color: #ffffff; }
+  .card.silver .qt { color: #1b1e23; font-weight: 600; }
+  .card.silver .chip { background: rgba(20, 25, 35, .14); color: #2a2f38; }
+  .card.silver .av { box-shadow: 0 0 0 3px rgba(255,255,255,.6); }
+  .card.silver::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.7), transparent); transform: skewX(-20deg);
+    animation: shine 3.6s ease-in-out infinite; }
+  .card.silver.now { border-color: #fff; box-shadow: 0 0 20px rgba(220,230,240,.45); animation: none; }
+  .card.silver.now .tag { background: #2a2f38; color: #f4f6f9; }
+  .card.gold.done .tag, .card.silver.done .tag { color: #fff; }
+  .in-silver { animation: inSilver .8s var(--bounce) both; }
+  @keyframes inSilver { 0% { opacity: 0; transform: rotateY(90deg) scale(.8); filter: brightness(2); } 100% { opacity: 1; transform: none; filter: none; } }
+  /* 🔥 streak card */
+  .card.fire { background: linear-gradient(135deg, #42201a, #2f211d 65%); border-color: var(--t-streak); }
+  .card.fire::before { content: ""; position: absolute; inset: -2px; border-radius: 12px; pointer-events: none;
+    box-shadow: inset 0 -10px 22px -10px rgba(255,90,31,.55); animation: flicker 1.1s ease-in-out infinite alternate; }
+  .card.fire.now { border-color: #ffb347; box-shadow: 0 0 20px rgba(255,90,31,.45); animation: none; }
+  .card.fire.now .tag { background: var(--t-streak); color: #fff; }
+  @keyframes flicker { from { opacity: .55; } to { opacity: 1; } }
+  .in-fire { animation: inFire .8s var(--bounce) both; }
+  @keyframes inFire { 0% { opacity: 0; transform: translateY(40px) scale(.7); filter: brightness(2.4) saturate(2); }
+    60% { opacity: 1; transform: translateY(-6px) scale(1.04); } 100% { transform: none; filter: none; } }
+  /* 🗳️ who's right: two avatars */
+  .card .duo { display: flex; flex: none; }
+  .card .duo .av { width: 34px; height: 34px; font-size: 18px; border: 2px solid var(--card); }
+  .card .duo .av + .av { margin-left: -12px; }
+  #choices.two { grid-template-columns: repeat(2, 1fr); }
+  #choices button .say { display: flex; flex-direction: column; gap: 2px; }
+  #choices button .say b { color: var(--t-whos_right); font-size: 13px; }
+  #choices.two button .k { background: none; width: 34px; height: 34px; font-size: 20px; }
+  .ring.bolt .prg { stroke: var(--t-lightning); }
+  .verdict.REDEEMED { background: linear-gradient(90deg, #c9d1dc, #fff); color: #1e2024; animation: pop .45s var(--bounce); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font: 16px/1.45 "gg sans", "Segoe UI", system-ui, sans-serif; overflow: hidden; }
+  button { font: inherit; cursor: pointer; border: 0; color: inherit; background: none; }
+  button:disabled { opacity: .45; cursor: default; }
+  ::-webkit-scrollbar { width: 10px; } ::-webkit-scrollbar-thumb { background: #1a1b1e; border-radius: 6px; border: 2px solid var(--panel); }
+  .emo { font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; line-height: 1; }
+  b.kw { color: var(--head); } u.kw { text-underline-offset: 3px; }
+  .blank { display: inline-block; min-width: 70px; border-bottom: 3px solid var(--t-fill_blank); margin: 0 4px; transform: translateY(-3px); }
+
+  .app { height: 100%; display: grid; grid-template-rows: 1fr auto; gap: 14px; padding: 16px; }
+  .top { display: grid; grid-template-columns: 1fr minmax(340px, 36%); gap: 14px; min-height: 0; }
+  .panel { background: var(--panel); border-radius: 14px; min-height: 0; position: relative; }
+
+  /* ---------------- question feed ---------------- */
+  .feed-wrap { display: flex; flex-direction: column; overflow: hidden; }
+  .feed-head { display: flex; align-items: center; gap: 10px; padding: 14px 18px 6px; color: var(--muted);
+    font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .feed-head .count { background: var(--card2); color: var(--head); border-radius: 10px; padding: 1px 8px; font-size: 12px; }
+  /* no scrolling: 9 rows that always fit, so every card (and its arrival animation) is on screen */
+  #feed { flex: 1; min-height: 0; overflow: hidden; padding: 6px 14px 12px; display: grid;
+    grid-template-rows: repeat(9, minmax(0, 1fr)); gap: 8px; }
+  #feed > .empty { grid-row: 1 / -1; }
+  .card { display: flex; align-items: center; gap: 12px; background: var(--card); border: 2px solid transparent; min-height: 0;
+    border-radius: 12px; padding: 6px 14px; will-change: transform, opacity; position: relative; overflow: hidden; }
+  .card .qt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+  @media (max-height: 820px) { .card .qt { -webkit-line-clamp: 1; } .card .chip { margin-bottom: 1px; } }
+  .card .av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 21px; overflow: hidden;
+    animation: hello .9s .35s var(--bounce) both; }
+  .card .av img { width: 100%; height: 100%; object-fit: cover; }
+  .card .body { flex: 1; min-width: 0; }
+  .card .qt { font-size: clamp(14px, 1.75vh, 17px); color: var(--head); }
+  .chip { display: inline-block; font-size: 11px; font-weight: 800; letter-spacing: .03em; padding: 2px 8px; border-radius: 20px;
+    margin-bottom: 3px; background: color-mix(in srgb, var(--tc) 18%, transparent); color: var(--tc); }
+  .card .tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; padding: 3px 8px; border-radius: 6px; flex: none; }
+  .card.now { border-color: var(--blurple); background: #34374a; animation: glow 2.2s ease-in-out infinite; }
+  .card.now .av { animation: bob 1.6s ease-in-out infinite; }
+  .card.now .tag { background: var(--blurple); color: #fff; }
+  .card.done { opacity: .8; }
+  .card.done .tag { background: var(--card2); color: var(--muted); }
+  .card.v-CORRECT { border-color: var(--green); } .card.v-CORRECT .tag { background: var(--green); color: #fff; }
+  .card.v-PARTLY  { border-color: var(--yellow); } .card.v-PARTLY .tag { background: var(--yellow); color: #222; }
+  .card.v-WRONG   { border-color: var(--red); } .card.v-WRONG .tag { background: var(--red); color: #fff; }
+  @keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(88,101,242,0); } 50% { box-shadow: 0 0 0 5px rgba(88,101,242,.18); } }
+  @keyframes hello { 0% { transform: rotate(0); } 25% { transform: rotate(-14deg) scale(1.1); } 50% { transform: rotate(10deg); } 75% { transform: rotate(-5deg); } 100% { transform: none; } }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px) rotate(-4deg); } }
+
+  /* gold challenge cards */
+  /* ⭐ gold and 🥈 silver cards are filled with their colour, not just outlined */
+  .card.gold { background: linear-gradient(135deg, #ffe27a 0%, #f5c542 45%, #d9a521 100%); border-color: #fff0b3; }
+  .card.gold .qt { color: #2b1d00; font-weight: 600; }
+  .card.gold .chip { background: rgba(60, 40, 0, .16); color: #3a2800; }
+  .card.gold .av { box-shadow: 0 0 0 3px rgba(255,255,255,.55); }
+  .card.gold::after { content: ""; position: absolute; top: 0; bottom: 0; width: 60px; left: -80px;
+    background: linear-gradient(90deg, transparent, rgba(255,240,180,.35), transparent); transform: skewX(-20deg);
+    animation: shine 3.2s ease-in-out infinite; }
+  .card.gold.now { border-color: #fff; box-shadow: 0 0 22px rgba(245,197,66,.55); animation: none; }
+  .card.gold.now .tag { background: #3a2800; color: #ffe27a; }
+  @keyframes shine { 0% { left: -80px; } 60%, 100% { left: 110%; } }
+  /* ⭐ gold: drops in from above and lands with a heavy "thunk" */
+  .in-gold { animation: inGold .75s cubic-bezier(.5, 0, .5, 1) both; }
+  @keyframes inGold { 0% { opacity: 0; transform: translateY(-70px) scale(1.25); filter: brightness(2.2); }
+    45% { opacity: 1; transform: translateY(6px) scale(.97); filter: brightness(1.4); }
+    62% { transform: translateY(-4px) scale(1.01); } 78% { transform: translateY(2px); } 100% { transform: none; filter: none; } }
+  .card.spot { z-index: 27; }
+  #feed.thunk { animation: thunk .35s ease-out; }
+  @keyframes thunk { 0% { transform: none; } 30% { transform: translateY(5px); } 60% { transform: translateY(-2px); } 100% { transform: none; } }
+  #dim { position: fixed; inset: 0; background: rgba(0,0,0,.4); opacity: 0; pointer-events: none; z-index: 25; transition: opacity .25s; }
+  #dim.on { opacity: 1; }
+  #sweep { position: fixed; top: 0; bottom: 0; width: 35%; left: -40%; pointer-events: none; z-index: 26; display: none;
+    background: linear-gradient(100deg, transparent, rgba(255,215,90,.35), rgba(255,245,190,.6), rgba(255,215,90,.35), transparent); }
+  #sweep.go { display: block; animation: sweep .9s ease-in-out forwards; }
+  @keyframes sweep { from { left: -40%; } to { left: 110%; } }
+  /* 🥈 silver: spins in like a coin, then a bright glint */
+  /* a small silver coin flips over once (around the avatar), then the box grows out of it */
+  .in-coin { animation: inCoin 1.05s cubic-bezier(.3, .7, .25, 1) both; transform-origin: 34px 50%; }
+  @keyframes inCoin {
+    0%   { opacity: 0; transform: perspective(700px) rotateY(-180deg); clip-path: circle(24px at 34px 50%); }
+    40%  { opacity: 1; transform: perspective(700px) rotateY(0deg);    clip-path: circle(24px at 34px 50%); }
+    55%  { transform: scale(1.06);                                     clip-path: circle(28px at 34px 50%); }
+    100% { opacity: 1; transform: none;                                clip-path: circle(150% at 34px 50%); } }
+  .card.silver.glint::after { animation: shine .6s ease-out 1, shine 3.6s 1s ease-in-out infinite; }
+  /* ⚡ lightning: screen edges flash, a bolt zig-zags across the card */
+  #edgeflash { position: fixed; inset: 0; pointer-events: none; z-index: 26; }
+  #edgeflash.go { animation: edge .65s ease-out; }
+  @keyframes edge { 0% { box-shadow: inset 0 0 140px 40px rgba(255,170,60,.85); } 25% { box-shadow: inset 0 0 70px 14px rgba(255,255,255,.55); }
+    45% { box-shadow: inset 0 0 110px 30px rgba(255,140,30,.6); } 100% { box-shadow: inset 0 0 0 0 rgba(255,138,31,0); } }
+  .zap { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  .zap svg { overflow: visible; }
+  .zap polyline { fill: none; stroke: #fff6d6; stroke-width: 3.5; stroke-linejoin: round; filter: drop-shadow(0 0 6px #ff8a1f) drop-shadow(0 0 12px #ffb347);
+    animation: zap .4s ease-out forwards, zapfade .35s .45s forwards; }
+  @keyframes zap { to { stroke-dashoffset: 0; } }
+  @keyframes zapfade { to { opacity: 0; } }
+  /* 🧟 zombie */
+  #feed { position: relative; }
+  .zombie { position: absolute; left: 0; top: 0; z-index: 6; pointer-events: none; transition: transform .1s linear; }
+  .zombie .zb { display: inline-block; font-size: 44px; filter: drop-shadow(0 0 10px rgba(80, 220, 120, .7));
+    animation: shamble .9s ease-in-out infinite; transform-origin: bottom center; }
+  @keyframes shamble { 0%, 100% { transform: rotate(-9deg) translateY(0); } 50% { transform: rotate(9deg) translateY(-3px); } }
+  .zombie .zt { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); font-size: 12px; font-weight: 900;
+    color: #b8ffcf; background: rgba(10, 40, 20, .85); border: 1px solid #3ddc84; border-radius: 10px; padding: 0 6px; white-space: nowrap; }
+  .zombie.emerge .zb { animation: emerge .9s var(--bounce) both, shamble .9s .9s ease-in-out infinite; }
+  @keyframes emerge { 0% { transform: translateY(30px) scale(.2) rotate(-30deg); opacity: 0; } 60% { opacity: 1; transform: translateY(-8px) scale(1.25) rotate(10deg); }
+    100% { transform: none; } }
+  .zombie.frozen .zb { animation: none; filter: drop-shadow(0 0 10px rgba(80, 220, 120, .7)) grayscale(.5); }
+  .zombie.lunge .zb { animation: lunge .6s ease-in forwards; }
+  @keyframes lunge { 30% { transform: scale(1.4) rotate(-15deg); } 100% { transform: scale(.3) translateX(-60px); opacity: 0; } }
+  .zombie.poof .zb { animation: puff .8s ease-out forwards; }
+  .slime { position: absolute; z-index: 4; width: 12px; height: 9px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 40% 40%, #7dff9e, #1f9a4a 70%); box-shadow: 0 0 8px rgba(80, 220, 120, .6);
+    animation: slime 4s ease-out forwards; }
+  @keyframes slime { 0% { opacity: .9; transform: scale(.4); } 15% { transform: scale(1); } 100% { opacity: 0; transform: scale(1.3, .6); } }
+  .smoke.green { background: rgba(80, 220, 120, .55); }
+  .card.zhost { border-color: #3ddc84; box-shadow: 0 0 16px rgba(61, 220, 132, .35); animation: zvibe .32s linear infinite; }
+  /* a gentle tremble, not a big shake */
+  @keyframes zvibe { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-1px); } 75% { transform: translateX(1px); } }
+  .card.zhost.zfrozen { animation: none; }
+  .card.zhost.now { animation: zvibe .32s linear infinite; }
+  .zpart { position: absolute; bottom: 4px; width: 6px; height: 6px; border-radius: 50%; pointer-events: none; z-index: 2;
+    background: radial-gradient(circle, #b8ffcf, #3ddc84 60%, transparent 70%); box-shadow: 0 0 8px #3ddc84;
+    animation: zrise 1.6s ease-out forwards; }
+  @keyframes zrise { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--zx), -60px) scale(1.2); } }
+  .card .zcount { position: absolute; right: 210px; top: 50%; transform: translateY(-50%); z-index: 4; font-size: 12px; font-weight: 800;
+    color: #b8ffcf; background: rgba(10, 40, 20, .85); border: 1px solid #3ddc84; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+  .card .bitemarks { position: absolute; left: 30%; top: 0; width: 70px; height: 100%; pointer-events: none; z-index: 1; opacity: .55;
+    background: radial-gradient(ellipse 5px 9px at 15% 0, rgba(10,30,15,.9) 0 80%, transparent 90%),
+                radial-gradient(ellipse 5px 9px at 38% 0, rgba(10,30,15,.9) 0 80%, transparent 90%),
+                radial-gradient(ellipse 5px 9px at 61% 0, rgba(10,30,15,.9) 0 80%, transparent 90%),
+                radial-gradient(ellipse 5px 9px at 84% 0, rgba(10,30,15,.9) 0 80%, transparent 90%),
+                radial-gradient(ellipse 5px 9px at 26% 100%, rgba(10,30,15,.9) 0 80%, transparent 90%),
+                radial-gradient(ellipse 5px 9px at 50% 100%, rgba(10,30,15,.9) 0 80%, transparent 90%),
+                radial-gradient(ellipse 5px 9px at 74% 100%, rgba(10,30,15,.9) 0 80%, transparent 90%); }
+  .zombie.bite .zb { animation: zbite 1.3s ease-in-out both; }
+  @keyframes zbite { 0% { opacity: 0; transform: scale(.3) translateX(30px); } 25% { opacity: 1; transform: scale(1.15); }
+    40% { transform: scale(1.3) translateX(-26px) rotate(-12deg); } 50% { transform: scale(1.1) translateX(-10px); }
+    62% { transform: scale(1.3) translateX(-26px) rotate(-12deg); } 75% { transform: scale(1.05); } 100% { opacity: 0; transform: scale(.4) translateX(-40px); } }
+  .zstream { position: fixed; z-index: 31; width: 9px; height: 9px; margin: -4px 0 0 -4px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, #d9ffe4, #3ddc84 55%, transparent 70%); box-shadow: 0 0 10px #3ddc84;
+    animation: zstream .8s cubic-bezier(.4, 0, .4, 1) forwards; }
+  @keyframes zstream { 0% { opacity: 0; transform: translate(0, 0) scale(.5); } 15% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.3); } }
+  .card .crack { position: absolute; inset: 0; pointer-events: none; z-index: 1; border-radius: 12px; opacity: .7;
+    background:
+      linear-gradient(115deg, transparent 48%, rgba(61,220,132,.8) 49%, transparent 50.5%) 70% 10% / 40px 46px no-repeat,
+      linear-gradient(60deg, transparent 48%, rgba(61,220,132,.7) 49%, transparent 50.5%) 76% 60% / 34px 40px no-repeat,
+      linear-gradient(150deg, transparent 48%, rgba(61,220,132,.6) 49%, transparent 50.5%) 64% 70% / 30px 30px no-repeat; }
+  .card .fight { position: absolute; right: 110px; top: 50%; transform: translateY(-50%); z-index: 4; padding: 6px 12px; border-radius: 8px;
+    background: #1f9a4a; color: #eafff0; font-weight: 800; font-size: 13px; box-shadow: 0 0 12px rgba(61, 220, 132, .5);
+    animation: fightPulse 1s ease-in-out infinite; }
+  .card .fight:hover { background: #27b85a; }
+  @keyframes fightPulse { 0%, 100% { transform: translateY(-50%) scale(1); } 50% { transform: translateY(-50%) scale(1.06); } }
+  .card.now .fight { display: none; }
+  .card.bitten { animation: bitten .9s ease-out !important; }
+  @keyframes bitten { 0% { transform: none; } 15% { transform: scale(.94) rotate(-2deg); filter: hue-rotate(80deg) brightness(1.4); }
+    40% { transform: scale(1.03) rotate(1deg); } 100% { transform: none; filter: none; } }
+  .card.infecting { animation: infecting 1s ease-in-out infinite !important; border-color: #3ddc84; }
+  @keyframes infecting { 0%, 100% { box-shadow: 0 0 0 rgba(61,220,132,0); } 50% { box-shadow: 0 0 22px rgba(61,220,132,.6); } }
+  #zflash { position: fixed; inset: 0; pointer-events: none; z-index: 29; }
+  #zflash.go { animation: zflash .7s ease-out; }
+  @keyframes zflash { 0% { background: rgba(61, 220, 132, .38); } 100% { background: rgba(20, 120, 60, 0); } }
+  /* 🧟 infected card: dark green with drips */
+  .card.infected { background: linear-gradient(160deg, #18381f 0%, #13261a 60%, #0f1d14 100%); border-color: #3ddc84; }
+  .card.infected .qt { color: #d9ffe4; }
+  .card.infected::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 14px; pointer-events: none;
+    background: radial-gradient(circle at 12% 0, #3ddc84 0 6px, transparent 7px), radial-gradient(circle at 34% 0, #3ddc84 0 4px, transparent 5px),
+                radial-gradient(circle at 58% 0, #3ddc84 0 7px, transparent 8px), radial-gradient(circle at 81% 0, #3ddc84 0 5px, transparent 6px);
+    opacity: .55; }
+  .card.infected .chip { --tc: #3ddc84 !important; }
+  .card.infected.now { border-color: #8dffb4; box-shadow: 0 0 20px rgba(61, 220, 132, .45); animation: none; }
+  .card.infected.now .tag { background: #3ddc84; color: #06240f; }
+  .card.zombify { animation: zombify 1.1s ease-out !important; }
+  @keyframes zombify { 0% { filter: hue-rotate(0) brightness(1); } 30% { filter: hue-rotate(90deg) brightness(1.6); transform: scale(1.03); }
+    100% { filter: none; transform: none; } }
+  /* 👑 zombie BOSS card */
+  .card.boss { padding: 6px 16px; background: radial-gradient(circle at 10% 50%, #1f5a2e 0%, #10301a 45%, #07140b 100%);
+    border: 3px solid #3ddc84; box-shadow: 0 0 26px rgba(61, 220, 132, .45), inset 0 0 30px rgba(0,0,0,.5); }
+  .card.boss .qt { color: #eafff0; font-size: 18px; font-weight: 700; }
+  .card.boss .qt { -webkit-line-clamp: 1; }
+  .card.boss .boss-av { width: 48px; height: 48px; font-size: 30px; background: #0a1f10; border: 2px solid #3ddc84; position: relative; overflow: visible;
+    animation: bossBreathe 2s ease-in-out infinite; }
+  .card.boss .boss-av .crown { position: absolute; top: -18px; left: 50%; transform: translateX(-50%) rotate(-8deg); font-size: 24px; }
+  @keyframes bossBreathe { 0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(61,220,132,.4); } 50% { transform: scale(1.06); box-shadow: 0 0 24px rgba(61,220,132,.8); } }
+  .card.boss .chip { --tc: #3ddc84 !important; }
+  .card.boss .hp { display: flex; gap: 6px; margin-top: 4px; }
+  .card.boss .hp i { width: 70px; height: 7px; border-radius: 5px; background: linear-gradient(90deg, #ff4d4d, #ff8a4d);
+    box-shadow: 0 0 8px rgba(255, 77, 77, .6); transition: all .4s; }
+  .card.boss .hp i.broken { background: #3a3a3a; box-shadow: none; transform: scaleX(.92); opacity: .5; }
+  .card.boss.now { border-color: #b8ffcf; animation: none; }
+  .card.boss.now .tag { background: #3ddc84; color: #06240f; }
+  .card.in-boss { animation: inBoss 1.2s var(--bounce) !important; }
+  @keyframes inBoss { 0% { transform: scale(.7); filter: brightness(2.5) hue-rotate(60deg); } 40% { transform: scale(1.08) rotate(-1deg); }
+    60% { transform: scale(.98) rotate(1deg); } 100% { transform: none; filter: none; } }
+  /* ☄️ meteor: purple asteroid, impact, and the purple meteor card it leaves behind */
+  .meteor-fly { position: fixed; left: 0; top: 0; z-index: 32; pointer-events: none; width: 54px; height: 54px;
+    animation: meteorIn .7s cubic-bezier(.55, 0, .9, .5) forwards; }
+  @keyframes meteorIn { from { transform: translate(var(--sx), var(--sy)) scale(.6) rotate(0); }
+    to { transform: translate(calc(var(--tx) - 27px), calc(var(--ty) - 27px)) scale(1.15) rotate(260deg); } }
+  .meteor-fly .rock { position: absolute; inset: 0; border-radius: 46% 54% 50% 50%;
+    background: radial-gradient(circle at 35% 30%, #e2b8ff 0 8%, #9b4dff 22%, #5a1fa8 55%, #2b0b55 80%);
+    box-shadow: 0 0 22px 8px rgba(170, 90, 255, .75), 0 0 60px 18px rgba(130, 50, 255, .4), inset -6px -8px 0 rgba(0,0,0,.35); }
+  .meteor-fly .rock::before, .meteor-fly .rock::after { content: ""; position: absolute; border-radius: 50%; background: rgba(30, 5, 60, .45); }
+  .meteor-fly .rock::before { width: 12px; height: 10px; left: 26px; top: 14px; }
+  .meteor-fly .rock::after { width: 8px; height: 8px; left: 14px; top: 30px; }
+  .mtrail { position: fixed; z-index: 31; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(220,170,255,.9), rgba(150,60,255,.5) 45%, transparent 70%); animation: mtrail .6s ease-out forwards; }
+  @keyframes mtrail { to { opacity: 0; transform: scale(.2) translate(30px, -18px); } }
+  #mflash { position: fixed; inset: 0; pointer-events: none; z-index: 29; }
+  #mflash.go { animation: mflash .7s ease-out; }
+  @keyframes mflash { 0% { background: rgba(200, 140, 255, .55); } 100% { background: rgba(120, 40, 255, 0); } }
+  /* a small, short nudge only (big screen shakes are dizzying) */
+  .app.quake { animation: quake .3s ease-out; }
+  @keyframes quake { 30% { transform: translateY(2px); } 65% { transform: translateY(-1px); } 100% { transform: none; } }
+  .shock { position: fixed; z-index: 30; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; pointer-events: none;
+    border: 4px solid rgba(200, 140, 255, .9); box-shadow: 0 0 24px rgba(170, 90, 255, .8); animation: shock .75s ease-out forwards; }
+  @keyframes shock { to { transform: scale(18); opacity: 0; border-width: 1px; } }
+  .card.meteor { background: radial-gradient(circle at 12% 30%, #6b2fb0 0%, #3f1773 38%, #24103f 75%); border-color: #b46bff;
+    box-shadow: 0 0 18px rgba(170, 90, 255, .35); }
+  .card.meteor .qt { color: #f1e4ff; }
+  .card.meteor::before { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: 12px;      /* craters */
+    background: radial-gradient(circle at 78% 30%, rgba(20,0,40,.35) 0 7px, transparent 8px),
+                radial-gradient(circle at 88% 72%, rgba(20,0,40,.3) 0 5px, transparent 6px),
+                radial-gradient(circle at 64% 80%, rgba(20,0,40,.25) 0 4px, transparent 5px);
+    animation: mglow 2.4s ease-in-out infinite; }
+  @keyframes mglow { 0%, 100% { box-shadow: inset 0 0 14px rgba(190, 120, 255, .25); } 50% { box-shadow: inset 0 0 26px rgba(190, 120, 255, .55); } }
+  .card.meteor .chip.mchip { background: rgba(190, 120, 255, .25); color: #e3c6ff; margin-right: 4px; }
+  .card.meteor .av { box-shadow: 0 0 0 3px rgba(180, 107, 255, .7), 0 0 14px rgba(180, 107, 255, .6); }
+  .card.meteor.now { border-color: #e3c6ff; box-shadow: 0 0 24px rgba(170, 90, 255, .6); animation: none; }
+  .card.meteor.now .tag { background: #b46bff; color: #1c0636; }
+  .card.hit { animation: hit .85s cubic-bezier(.2, 1.4, .4, 1) !important; }
+  @keyframes hit { 0% { transform: scale(.96); filter: brightness(2); } 35% { transform: scale(1.02); }
+    100% { transform: none; filter: none; } }
+  /* 🔥 streak: flames rise from the bottom of the feed */
+  .flames { position: absolute; left: 0; right: 0; bottom: 0; height: 180px; pointer-events: none; z-index: 5; overflow: hidden;
+    background: linear-gradient(to top, rgba(255,90,31,.35), transparent); animation: flameglow 1.6s ease-out forwards; border-radius: 0 0 14px 14px; }
+  .flames span { position: absolute; bottom: -40px; animation: rise 1.2s ease-out forwards; opacity: 0; }
+  @keyframes rise { 0% { opacity: 0; transform: translateY(0) scale(.6); } 25% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-170px) scale(1.2) rotate(8deg); } }
+  @keyframes flameglow { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
+  /* "… is typing" bubble that grows into the card */
+  .card.typing-bubble { background: transparent; border-color: transparent; padding: 6px 14px; overflow: hidden; }
+  .card.typing-bubble .duo { display: flex; }
+  .card.typing-bubble .duo .av + .av { margin-left: -12px; }
+  .card.typing-bubble .av { width: 34px; height: 34px; font-size: 18px; animation: bob 1s ease-in-out infinite; }
+  .card.typing-bubble .bubble { background: var(--card2); border-radius: 4px 16px 16px 16px; padding: 9px 14px; color: var(--muted);
+    font-size: 14px; display: flex; gap: 10px; align-items: center; }
+  .card.typing-bubble .bubble b { color: var(--head); font-weight: 600; }
+  /* ⏱ timer tension: the card trembles under 5 s, the answer bar has a heartbeat under 3 s */
+  .card.now.tense { animation: tense .4s ease-in-out infinite; }
+  @keyframes tense { 0%, 100% { transform: none; } 25% { transform: translateX(-2px) rotate(-.35deg); } 75% { transform: translateX(2px) rotate(.35deg); } }
+  .bar.heartbeat { animation: heartbeat .9s ease-in-out infinite; }
+  @keyframes heartbeat { 0%, 100% { box-shadow: 0 0 0 0 rgba(242,63,67,0); } 15% { box-shadow: 0 0 0 3px rgba(242,63,67,.55), 0 0 34px rgba(242,63,67,.28); }
+    30% { box-shadow: 0 0 0 0 rgba(242,63,67,.1); } 45% { box-shadow: 0 0 0 2px rgba(242,63,67,.4), 0 0 22px rgba(242,63,67,.18); } }
+  /* ✍️ the student leans in while the Teacher types */
+  .card.now .av.lean { animation: lean .55s ease-in-out infinite alternate; }
+  @keyframes lean { from { transform: rotate(-12deg) scale(1.12) translateX(3px); } to { transform: rotate(-5deg) scale(1.06) translateX(1px); } }
+  /* 🗳️ who's right: avatars slide in from both sides and bump; the answer buttons slide up with a VS */
+  .card .duo.in-duel .av:first-child { animation: duelL .8s .1s var(--bounce) both; }
+  .card .duo.in-duel .av:last-child { animation: duelR .8s .1s var(--bounce) both; }
+  @keyframes duelL { 0% { opacity: 0; transform: translateX(-46px); } 55% { opacity: 1; transform: translateX(7px) rotate(10deg); }
+    72% { transform: translateX(-4px) rotate(-4deg); } 100% { transform: none; } }
+  @keyframes duelR { 0% { opacity: 0; transform: translateX(46px); } 55% { opacity: 1; transform: translateX(-7px) rotate(-10deg); }
+    72% { transform: translateX(4px) rotate(4deg); } 100% { transform: none; } }
+  #choices.show.two { position: relative; grid-template-columns: repeat(2, 1fr); column-gap: 26px; }
+  #choices.two button { animation: slideUp .55s var(--bounce) both; }
+  #choices.two button:nth-of-type(2) { animation-delay: .14s; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(46px); } to { opacity: 1; transform: none; } }
+  #choices .vs { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 2; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--t-whos_right); color: #062b26; font-weight: 900; font-size: 13px; display: grid; place-items: center;
+    box-shadow: 0 0 0 4px var(--panel); animation: vsPop .5s .35s var(--bounce) both; pointer-events: none; }
+  @keyframes vsPop { from { opacity: 0; transform: translate(-50%, -50%) scale(.2) rotate(-30deg); } to { opacity: 1; transform: translate(-50%, -50%); } }
+
+  /* pop-in animations: a different one for each new card */
+  .in-pop   { animation: inPop .55s var(--bounce) both; }
+  .in-slide { animation: inSlide .6s var(--bounce) both; }
+  .in-drop  { animation: inDrop .65s var(--bounce) both; }
+  .in-flip  { animation: inFlip .6s ease-out both; transform-origin: top center; }
+  .in-swing { animation: inSwing .65s var(--bounce) both; transform-origin: left center; }
+  .in-zoom  { animation: inZoom .55s ease-out both; }
+  @keyframes inPop   { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: none; } }
+  @keyframes inSlide { from { opacity: 0; transform: translateX(90px); } to { opacity: 1; transform: none; } }
+  @keyframes inDrop  { from { opacity: 0; transform: translateY(-46px) rotate(-3deg); } to { opacity: 1; transform: none; } }
+  @keyframes inFlip  { from { opacity: 0; transform: perspective(600px) rotateX(-85deg); } to { opacity: 1; transform: none; } }
+  @keyframes inSwing { from { opacity: 0; transform: rotate(-9deg) translateX(-40px); } to { opacity: 1; transform: none; } }
+  @keyframes inZoom  { from { opacity: 0; transform: scale(1.25); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+  .card.out-left { animation: outLeft .45s ease-in forwards; }
+  .card.out-time { animation: outTime .75s ease-in forwards; }
+  @keyframes outLeft { to { opacity: 0; transform: translateX(-110%); } }
+  @keyframes outTime { 0% { transform: none; } 15% { transform: translateX(-8px); } 30% { transform: translateX(8px); }
+    45% { transform: translateX(-5px); filter: grayscale(0); } 100% { opacity: 0; transform: translateX(-110%); filter: grayscale(1); } }
+
+  .thinking { display: flex; align-items: center; gap: 8px; padding: 10px 18px 14px; color: var(--muted); font-size: 14px; min-height: 42px; }
+  .thinking b { color: var(--head); font-weight: 600; }
+  .thinking .emo { display: inline-block; animation: bob 1.2s ease-in-out infinite; }
+  .dots span { display: inline-block; width: 6px; height: 6px; margin-right: 3px; border-radius: 50%; background: var(--muted); animation: dot 1.2s infinite; }
+  .dots span:nth-child(2) { animation-delay: .15s; } .dots span:nth-child(3) { animation-delay: .3s; }
+  @keyframes dot { 0%, 60%, 100% { opacity: .3; transform: none; } 30% { opacity: 1; transform: translateY(-3px); } }
+  .empty { height: 100%; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 30px; }
+  .empty .big { font-size: 54px; margin-bottom: 8px; }
+  .empty h2 { color: var(--head); margin: 0 0 6px; font-size: 24px; }
+
+  /* ---------------- answer / explanation panel ---------------- */
+  .reveal { display: flex; flex-direction: column; padding: 18px; overflow: hidden; }
+  .rv-head { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12px; font-weight: 700;
+    letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
+  .rv-head .grow { flex: 1; }
+  #star { width: 38px; height: 38px; border-radius: 10px; background: var(--card); font-size: 20px; color: var(--muted);
+    transition: transform .2s var(--bounce), color .2s; }
+  #star:hover:not(:disabled) { transform: scale(1.12); color: var(--yellow); }
+  #star.on { color: var(--yellow); animation: pop .45s var(--bounce); }
+  @keyframes pop { 0% { transform: scale(.6) rotate(-30deg); } 100% { transform: none; } }
+  .rv-body { flex: 1; overflow-y: auto; min-height: 0; padding-right: 4px; }
+  .lines span { display: block; height: 12px; border-radius: 6px; margin: 0 0 14px; background: linear-gradient(90deg, var(--card) 25%, var(--card2) 50%, var(--card) 75%);
+    background-size: 300% 100%; animation: shimmer 2.4s linear infinite; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+  .lock { color: var(--muted); text-align: center; margin-top: 10px; font-size: 14px; }
+  .rv-content { animation: reveal .6s var(--bounce) both; }
+  @keyframes reveal { from { opacity: 0; transform: translateY(16px) scale(.97); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  .who { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+  .explain { font-size: 18px; color: var(--head); line-height: 1.5; }
+  .picked { margin-top: 10px; display: grid; gap: 6px; }
+  .picked div { padding: 7px 10px; border-radius: 8px; background: var(--card); font-size: 14px; border: 2px solid transparent; }
+  .picked .right { border-color: var(--green); } .picked .mine.wrong { border-color: var(--red); opacity: .85; }
+  .you { margin-top: 14px; background: var(--card); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  .you .lbl { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px; }
+  .verdict { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 6px; text-transform: none; letter-spacing: 0; }
+  .verdict.pending { background: var(--card2); color: var(--muted); }
+  .verdict.CORRECT { background: var(--green); color: #fff; animation: pop .45s var(--bounce); }
+  .verdict.PARTLY { background: var(--yellow); color: #222; animation: pop .45s var(--bounce); }
+  .verdict.WRONG { background: var(--red); color: #fff; animation: pop .45s var(--bounce); }
+  .react { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; }
+  .react .rav { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 21px; flex: none; overflow: hidden; }
+  .react .rav img { width: 100%; height: 100%; object-fit: cover; }
+  .react.said .rav { animation: talk .8s var(--bounce); }
+  .react .bubble { background: var(--card2); border-radius: 4px 14px 14px 14px; padding: 9px 13px; font-size: 15px; color: var(--head); }
+  .react.said .bubble { animation: bubble .45s var(--bounce); transform-origin: top left; }
+  @keyframes talk { 0% { transform: scale(1); } 30% { transform: scale(1.18) rotate(-8deg); } 60% { transform: scale(.95) rotate(5deg); } 100% { transform: none; } }
+  @keyframes bubble { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+  .more { margin-top: 12px; border-left: 3px solid var(--blurple); padding: 6px 0 6px 12px; animation: reveal .55s var(--bounce) both; }
+  .more .lvl { font-size: 11px; font-weight: 800; color: var(--blurple); letter-spacing: .05em; text-transform: uppercase; margin-bottom: 3px; }
+  .more .tx { font-size: 16px; color: var(--head); }
+  .more.auto { border-left-color: var(--green); margin-top: 16px; }
+  .more.auto .lvl { color: #57d18b; }
+  .more.auto .tx { font-size: 17px; line-height: 1.5; }
+  .rv-btns { display: flex; gap: 10px; margin-top: 14px; }
+  .rv-btns button { height: 48px; border-radius: 10px; font-weight: 700; font-size: 16px; transition: transform .15s, background .15s; }
+  #more { flex: 1; background: var(--card2); color: var(--head); }
+  #more:hover:not(:disabled) { background: #45474e; transform: translateY(-1px); }
+  #ok { flex: 1.3; background: var(--blurple); color: #fff; }
+  #ok:hover:not(:disabled) { background: var(--blurple2); transform: translateY(-1px); }
+  #ok:not(:disabled), #more:not(:disabled) { animation: okIn .5s var(--bounce); }
+  @keyframes okIn { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* ---------------- bottom answer bar ---------------- */
+  .bar { display: grid; grid-template-columns: 200px 1fr; min-height: 160px; }
+  .clockbox { border-right: 1px solid var(--line); padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .clockrow { display: flex; align-items: center; gap: 8px; }
+  #classTime { font-size: 34px; font-weight: 800; color: var(--head); font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  #classTime.low { color: var(--yellow); }
+  /* 🔥 streak flame: grows and changes colour — 3 orange, 5 red, 7 blue, 10 purple — with embers */
+  #streak { --ember: #ffb347; position: relative; display: none; align-items: center; gap: 3px; font-size: 16px; font-weight: 800;
+    color: #ffb347; background: rgba(255,140,0,.14); padding: 2px 10px 2px 6px; border-radius: 20px; transition: background .3s, color .3s; }
+  #streak.show { display: inline-flex; animation: pop .45s var(--bounce); }
+  #streak .fl { display: inline-block; font-size: 17px; transition: font-size .35s var(--bounce), filter .35s; animation: flick .9s ease-in-out infinite alternate; transform-origin: bottom center; }
+  @keyframes flick { from { transform: scale(1) rotate(-3deg); } to { transform: scale(1.08) rotate(3deg); } }
+  #streak.lv3 .fl { font-size: 22px; }
+  #streak.lv5 { --ember: #ff5b4a; color: #ff7a6b; background: rgba(255,60,40,.16); }
+  #streak.lv5 .fl { font-size: 25px; filter: hue-rotate(-25deg) saturate(1.7); }
+  #streak.lv7 { --ember: #6ec8ff; color: #7fd0ff; background: rgba(60,150,255,.16); }
+  #streak.lv7 .fl { font-size: 28px; filter: hue-rotate(185deg) saturate(1.5) brightness(1.15); }
+  #streak.lv10 { --ember: #c58bff; color: #d3a4ff; background: rgba(160,80,255,.18); box-shadow: 0 0 16px rgba(160,80,255,.35); }
+  #streak.lv10 .fl { font-size: 31px; filter: hue-rotate(250deg) saturate(1.6) brightness(1.1); }
+  #streak .n { display: inline-block; }
+  #streak .n.tick { animation: tickPop .45s var(--bounce); }
+  @keyframes tickPop { 0% { transform: scale(1.8); } 100% { transform: none; } }
+  #streak .embers { position: absolute; left: 6px; top: 0; width: 26px; height: 100%; pointer-events: none; }
+  #streak .embers i { position: absolute; bottom: 55%; width: 4px; height: 4px; border-radius: 50%; background: var(--ember); opacity: 0; }
+  #streak:is(.lv3, .lv5, .lv7, .lv10) .embers i { animation: ember 1.6s ease-out infinite; }
+  #streak .embers i:nth-child(1) { left: 8px; --ex: -6px; animation-delay: 0s; } #streak .embers i:nth-child(2) { left: 13px; --ex: 5px; animation-delay: .3s; }
+  #streak .embers i:nth-child(3) { left: 4px; --ex: -10px; animation-delay: .6s; } #streak .embers i:nth-child(4) { left: 16px; --ex: 9px; animation-delay: .9s; }
+  #streak .embers i:nth-child(5) { left: 10px; --ex: -2px; animation-delay: 1.15s; } #streak .embers i:nth-child(6) { left: 6px; --ex: 7px; animation-delay: 1.4s; }
+  @keyframes ember { 0% { opacity: 0; transform: none; } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--ex), -34px) scale(.4); } }
+  #streak.puff .fl { animation: puff .8s ease-out forwards; }
+  #streak.puff .n, #streak.puff .embers { opacity: 0; transition: opacity .4s; }
+  @keyframes puff { 0% { filter: grayscale(0); } 40% { filter: grayscale(1) brightness(1.6); transform: scale(1.4); } 100% { filter: grayscale(1); opacity: 0; transform: scale(1.9) translateY(-8px); } }
+  .smoke { position: fixed; z-index: 30; width: 16px; height: 16px; border-radius: 50%; background: rgba(170,172,182,.6); filter: blur(2px);
+    pointer-events: none; animation: smoke 1.1s ease-out forwards; }
+  @keyframes smoke { from { opacity: .85; transform: scale(.5); } to { opacity: 0; transform: translate(var(--dx), -56px) scale(2.4); } }
+  .flyer { position: fixed; left: 0; top: 0; z-index: 31; font-size: 26px; pointer-events: none; opacity: 0;
+    animation: fly .75s cubic-bezier(.5, 0, .3, 1) forwards; }
+  @keyframes fly { 0% { opacity: 1; transform: translate(var(--sx), var(--sy)) scale(.6); }
+    50% { opacity: 1; transform: translate(var(--mx), var(--my)) scale(1.35) rotate(-20deg); }
+    100% { opacity: .4; transform: translate(var(--tx), var(--ty)) scale(.6); } }
+  /* ✅ / 🟡 / ❌ stamps and card motion when he answers */
+  .card .stamp { position: absolute; right: 118px; top: 50%; font-size: 34px; z-index: 3; pointer-events: none; transform: translateY(-50%) rotate(-14deg); }
+  .card .stamp.slam { animation: slam .5s cubic-bezier(.2, 1.6, .4, 1) both; }
+  .card .stamp.half { font-size: 26px; opacity: .9; clip-path: inset(0 0 0 0); animation: slam .5s cubic-bezier(.2, 1.4, .4, 1) both, half .6s .5s ease-out forwards; }
+  .card .stamp.soft { animation: soft .45s ease-out both, stampOut .7s 1.5s ease-in forwards; }
+  @keyframes slam { 0% { opacity: 0; transform: translateY(-50%) rotate(-14deg) scale(3.4); } 60% { opacity: 1; transform: translateY(-50%) rotate(-14deg) scale(.88); }
+    100% { opacity: 1; transform: translateY(-50%) rotate(-14deg) scale(1); } }
+  @keyframes half { to { clip-path: inset(0 0 0 50%); } }
+  @keyframes soft { 0% { opacity: 0; transform: translateY(-50%) rotate(-8deg) scale(1.6); } 100% { opacity: .9; transform: translateY(-50%) rotate(-8deg) scale(1); } }
+  @keyframes stampOut { to { opacity: 0; transform: translateY(-50%) rotate(-8deg) scale(.8); } }
+  .card.happy { animation: happy .7s var(--bounce) !important; }
+  @keyframes happy { 0% { transform: none; } 30% { transform: translateY(-12px) scale(1.025); } 55% { transform: translateY(2px) scale(.995); } 100% { transform: none; } }
+  .card.wobble { animation: wobble .65s ease-in-out !important; }
+  @keyframes wobble { 0%, 100% { transform: none; } 25% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.3deg); } 75% { transform: rotate(-.6deg); } }
+  .card.headshake { animation: headshake .75s ease-in-out !important; }
+  @keyframes headshake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(2px); } }
+  .confetti { position: fixed; z-index: 30; border-radius: 2px; pointer-events: none; animation: conf 1.35s cubic-bezier(.2, .6, .4, 1) forwards; }
+  @keyframes conf { 0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+    35% { transform: translate(calc(var(--dx) * .55), var(--up)) rotate(calc(var(--rot) * .4)); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--down)) rotate(var(--rot)); } }
+  /* explanation: words appear one by one, keywords light up afterwards */
+  .w { display: inline-block; opacity: 0; animation: wIn .2s ease-out forwards; }
+  @keyframes wIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  b.kw.glow, u.kw.glow { border-radius: 4px; padding: 0 2px; margin: 0 -2px;
+    background: linear-gradient(90deg, rgba(255,214,90,.28), rgba(255,214,90,.28)) no-repeat 0 0 / 0% 100%;
+    animation: kwGlow .9s var(--gd, 0ms) ease-out forwards; }
+  @keyframes kwGlow { 0% { background-size: 0% 100%; } 45% { background-size: 100% 100%; text-shadow: 0 0 12px rgba(255,214,90,.9); color: #fff3c4; }
+    100% { background-size: 100% 100%; text-shadow: none; } }
+  .btnrow { display: flex; gap: 8px; }
+  .btn { flex: 1; height: 36px; border-radius: 8px; font-weight: 700; font-size: 14px; color: #fff; transition: filter .15s, transform .15s; }
+  .btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+  .btn.go { background: var(--green); } .btn.stop { background: var(--red); }
+  .mini { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+  #mini { display: flex; gap: 6px; }
+  .mini .st { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; position: relative; background: var(--card); }
+  .mini .st::after { content: ""; position: absolute; right: -2px; bottom: -2px; width: 8px; height: 8px; border-radius: 50%;
+    border: 2px solid var(--panel); background: var(--red); }
+  .mini .st.on::after { background: var(--green); }
+  .mini .grow { flex: 1; }
+  .ico { width: 28px; height: 28px; border-radius: 7px; background: var(--card); color: var(--muted); font-size: 14px; }
+  .ico:hover { color: var(--head); background: var(--card2); }
+
+  .ask { position: relative; padding: 16px 112px 16px 22px; display: flex; flex-direction: column; gap: 8px; overflow: hidden;
+    border-radius: 0 14px 14px 0; transition: background .5s ease, box-shadow .5s ease; }
+  /* the question bar takes on the current card's look */
+  .ask #qtext { transition: color .4s; }
+  .bar.k-gold { --sweepc: rgba(255, 250, 220, .8); background: linear-gradient(135deg, #ffe27a 0%, #f5c542 45%, #d9a521 100%); }
+  .bar.k-gold #qtext { color: #2b1d00; }
+  .bar.k-gold .chip { background: rgba(60, 40, 0, .16); color: #3a2800; }
+  .bar.k-silver { --sweepc: rgba(255, 255, 255, .85); background: linear-gradient(135deg, #f4f6f9 0%, #cfd5dd 45%, #a7b0bc 100%); }
+  .bar.k-silver #qtext { color: #1b1e23; }
+  .bar.k-silver .chip { background: rgba(20, 25, 35, .14); color: #2a2f38; }
+  .bar.k-bolt { --sweepc: rgba(255, 190, 110, .55); background: linear-gradient(135deg, #4a2f14, #2f261d 70%); box-shadow: inset 0 0 0 2px #ff8a1f; }
+  .bar.k-bolt #qtext { color: #ffe2c2; }
+  .bar.k-fire { --sweepc: rgba(255, 140, 80, .5); background: linear-gradient(135deg, #4a2018, #2f211d 70%);
+    box-shadow: inset 0 0 0 2px #ff5a1f, inset 0 -22px 34px -20px rgba(255, 90, 31, .65); }
+  .bar.k-fire #qtext { color: #ffd9c9; }
+  .bar.k-meteor { --sweepc: rgba(220, 170, 255, .5); background: radial-gradient(circle at 10% 30%, #6b2fb0 0%, #3f1773 40%, #24103f 80%);
+    box-shadow: inset 0 0 0 2px #b46bff; }
+  .bar.k-meteor #qtext { color: #f1e4ff; }
+  .bar.k-infected { --sweepc: rgba(120, 255, 160, .4); background: linear-gradient(160deg, #18381f 0%, #13261a 60%, #0f1d14 100%);
+    box-shadow: inset 0 0 0 2px #3ddc84; }
+  .bar.k-infected #qtext { color: #d9ffe4; }
+  .bar.k-boss { --sweepc: rgba(120, 255, 160, .45); background: radial-gradient(circle at 10% 50%, #1f5a2e 0%, #10301a 45%, #07140b 100%);
+    box-shadow: inset 0 0 0 3px #3ddc84, inset 0 0 34px rgba(61, 220, 132, .25); }
+  .bar.k-boss #qtext { color: #eafff0; }
+  .bar::after { content: ""; position: absolute; top: 0; bottom: 0; width: 30%; left: -40%; pointer-events: none; z-index: 0;
+    background: linear-gradient(100deg, transparent, var(--sweepc, rgba(255, 255, 255, .3)), transparent); }
+  .bar.kswap::after { animation: askSweep .9s ease-out; }
+  @keyframes askSweep { from { left: -40%; } to { left: 120%; } }
+  .ask > * { position: relative; z-index: 1; }
+  .ask > .ring { position: absolute; }
+  /* the whole bar (timer side too) wears the theme */
+  .bar { overflow: hidden; transition: background .5s ease, box-shadow .5s ease; }
+  .bar > .clockbox, .bar > .ask { position: relative; z-index: 1; }
+  .bar[class*="k-"] .clockbox { border-right-color: rgba(255, 255, 255, .12); }
+  .bar.k-gold .clockbox, .bar.k-silver .clockbox { border-right-color: rgba(0, 0, 0, .15); }
+  #classTime { transition: color .4s; }
+  .bar.k-gold #classTime { color: #2b1d00; }
+  .bar.k-silver #classTime { color: #1b1e23; }
+  .bar.k-bolt #classTime { color: #ffe2c2; } .bar.k-fire #classTime { color: #ffd9c9; }
+  .bar.k-meteor #classTime { color: #f1e4ff; } .bar.k-infected #classTime, .bar.k-boss #classTime { color: #d9ffe4; }
+  .bar.k-gold .ico, .bar.k-silver .ico, .bar.k-gold .mini .st, .bar.k-silver .mini .st { background: rgba(0, 0, 0, .14); }
+  .bar.k-gold .mini .st::after, .bar.k-silver .mini .st::after { border-color: rgba(0, 0, 0, .25); }
+  #qtype { min-height: 20px; }
+  #qtext { font-size: 22px; font-weight: 800; color: var(--head); min-height: 32px; }
+  #qtext.wait { font-weight: 500; color: var(--muted); font-size: 18px; }
+  #qtext.swap { animation: qswap .5s var(--bounce); }
+  #qtext .quote { color: #ffd1d8; }
+  @keyframes qswap { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .inrow { display: flex; gap: 10px; align-items: flex-end; }
+  #input { flex: 1; resize: none; height: 52px; max-height: 140px; border-radius: 10px; border: 2px solid transparent; outline: 0;
+    background: var(--card); color: var(--text); font: inherit; font-size: 17px; padding: 12px 14px; overflow-y: hidden; transition: border-color .15s; }
+  #input:focus { border-color: var(--blurple); }
+  #input:disabled { opacity: .55; }
+  #send { height: 52px; padding: 0 22px; border-radius: 10px; background: var(--blurple); color: #fff; font-weight: 700; }
+  #send:hover:not(:disabled) { background: var(--blurple2); }
+  #choices { display: none; gap: 10px; }
+  #choices.show { display: grid; grid-template-columns: repeat(3, 1fr); }
+  #choices button { min-height: 52px; border-radius: 10px; background: var(--card); border: 2px solid var(--line); padding: 8px 12px;
+    text-align: left; font-size: 15px; color: var(--head); display: flex; gap: 10px; align-items: center;
+    transition: transform .15s var(--bounce), border-color .15s, background .15s; animation: inPop .45s var(--bounce) both; }
+  #choices button:nth-child(2) { animation-delay: .06s; } #choices button:nth-child(3) { animation-delay: .12s; }
+  #choices button:hover:not(:disabled) { border-color: var(--t-pick_one); transform: translateY(-2px); }
+  #choices button .k { width: 26px; height: 26px; border-radius: 50%; background: var(--t-pick_one); color: #2a1600; font-weight: 800;
+    display: grid; place-items: center; flex: none; font-size: 13px; }
+  #choices button.right { border-color: var(--green); background: rgba(35,165,90,.15); }
+  #choices button.wrong { border-color: var(--red); background: rgba(242,63,67,.12); animation: shake .4s; }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .ring { position: absolute; right: 18px; top: 14px; width: 76px; height: 76px; }
+  .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ring circle { fill: none; stroke-width: 7; }
+  .ring .trk { stroke: var(--card); }
+  .ring .prg { stroke: var(--blurple); stroke-linecap: round; transition: stroke .3s; }
+  .ring.warn .prg { stroke: var(--yellow); } .ring.danger .prg { stroke: var(--red); }
+  .ring.danger { animation: tick 1s ease-in-out infinite; }
+  .ring.paused { opacity: .35; }
+  .ring .num { position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; font-weight: 800; color: var(--head);
+    font-variant-numeric: tabular-nums; }
+  @keyframes tick { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+  /* streak combo overlay */
+  #combo { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); pointer-events: none; z-index: 30; text-align: center; display: none; }
+  #combo.go { display: block; animation: combo 1.6s ease-out forwards; }
+  #combo .f { font-size: 90px; line-height: 1; }
+  #combo .t { font-size: 34px; font-weight: 900; color: #ffcf6e; text-shadow: 0 4px 24px rgba(255,120,0,.6); }
+  @keyframes combo { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.3) rotate(-10deg); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.15) rotate(3deg); } 35% { transform: translate(-50%, -50%) scale(1); }
+    75% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -70%) scale(.9); } }
+  .spark { position: fixed; z-index: 29; pointer-events: none; font-size: 22px; animation: spark 1s ease-out forwards; }
+  @keyframes spark { to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.4) rotate(160deg); } }
+
+  /* toast + modals */
+  #toast { position: fixed; left: 50%; top: 18px; transform: translate(-50%, -80px); background: var(--card2); color: var(--head);
+    padding: 10px 18px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.35); transition: transform .45s var(--bounce); z-index: 20; }
+  #toast.show { transform: translate(-50%, 0); }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; place-items: center; z-index: 10; }
+  .modal.open { display: grid; }
+  .mcard { width: min(820px, 94vw); background: var(--panel); border-radius: 14px; padding: 20px; animation: inPop .45s var(--bounce); }
+  .mcard h2 { margin: 0 0 6px; color: var(--head); }
+  .mcard p { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+  .mcard select, .mcard textarea { width: 100%; background: var(--bg); color: var(--text); border: 0; border-radius: 8px; padding: 10px; font: 13px/1.5 Consolas, monospace; }
+  .mcard select { font-family: inherit; font-size: 14px; margin-bottom: 10px; }
+  .mcard textarea { height: 340px; resize: vertical; }
+  .mrow { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  .mrow .grow { flex: 1; }
+  .b2 { padding: 9px 18px; border-radius: 8px; background: var(--card2); color: #fff; font-weight: 600; }
+  .b2.p { background: var(--blurple); }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 14px 0 4px; }
+  .stat { background: var(--card); border-radius: 12px; padding: 12px; text-align: center; animation: inPop .5s var(--bounce) both; }
+  .stat .n { font-size: 30px; font-weight: 800; color: var(--head); }
+  .stat .l { font-size: 13px; color: var(--muted); }
+
+  /* the current card keeps its own colour (silver / lightning / fire), it doesn't turn blue */
+  .card.silver.now { background: linear-gradient(135deg, #f4f6f9 0%, #cfd5dd 45%, #a7b0bc 100%); }
+  .card.bolt.now { background: linear-gradient(135deg, #3d2a17, #2f261d 70%); }
+  .card.fire.now { background: linear-gradient(135deg, #42201a, #2f211d 65%); }
+
+  /* ---------------- key words: bold + warm colour, everywhere ---------------- */
+  b.kw { color: #ffd98a; }
+  .card.gold .qt b.kw, .card.silver .qt b.kw, .bar.k-gold #qtext b.kw, .bar.k-silver #qtext b.kw { color: #8a3b00; }
+
+  /* ---------------- ☰ sidebar ---------------- */
+  .shell { height: 100%; display: flex; }
+  .main { flex: 1; min-width: 0; position: relative; }
+  .side { width: 64px; flex: none; background: #18191c; display: flex; flex-direction: column; gap: 6px; padding: 14px 10px;
+    transition: width .3s var(--bounce); overflow: hidden; z-index: 9; }
+  .side.open { width: 196px; }
+  .sb-btn { display: flex; align-items: center; gap: 12px; height: 44px; border-radius: 12px; padding: 0 11px; color: var(--muted);
+    white-space: nowrap; font-weight: 700; transition: background .15s, color .15s, transform .15s; flex: none; }
+  .sb-btn .emo { font-size: 20px; width: 22px; text-align: center; flex: none; }
+  .sb-btn:hover { background: var(--card); color: var(--head); }
+  .sb-btn:active { transform: scale(.94); }
+  .sb-btn.on { background: var(--blurple); color: #fff; }
+  .sb-btn.on .emo { animation: hello .8s var(--bounce); }
+  .sb-btn .lbl { opacity: 0; transition: opacity .2s; }
+  .side.open .sb-btn .lbl { opacity: 1; }
+  .sb-sep { height: 1px; background: var(--line); margin: 4px 4px 6px; flex: none; }
+
+  /* ---------------- 📚 lessons tab ---------------- */
+  .lessons { position: absolute; inset: 16px; z-index: 8; background: var(--panel); border-radius: 14px; display: none;
+    grid-template-rows: auto minmax(170px, 34%) minmax(0, 1fr); gap: 14px; padding: 16px 18px 18px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+  .lessons.open, .lessons.closing { display: grid; }
+  .lessons.open { animation: lvIn .4s var(--bounce); }
+  .lessons.closing { animation: lvOut .22s ease-in forwards; pointer-events: none; }
+  @keyframes lvIn { from { opacity: 0; transform: translateX(-46px) scale(.98); } to { opacity: 1; transform: none; } }
+  @keyframes lvOut { to { opacity: 0; transform: translateX(-46px) scale(.98); } }
+  .lv-head { display: flex; align-items: center; gap: 12px; }
+  .lv-head h2 { margin: 0; color: var(--head); font-size: 20px; }
+  .lv-head .grow, #notesHead .grow, .prow .grow { flex: 1; }
+  .lv-head #lvNow { font-size: 13px; color: var(--muted); } .lv-head #lvNow b { color: var(--head); }
+  .lv-top { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; min-height: 0; }
+  .drop, .paste { background: var(--card); border-radius: 18px; min-height: 0; }
+  .drop { border: 2px dashed #4e5058; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    text-align: center; padding: 14px; transition: border-color .2s, background .2s, transform .2s; cursor: pointer; }
+  .drop:hover { border-color: var(--blurple); }
+  .drop.over { border-color: var(--green); background: #2c3a33; transform: scale(1.015); }
+  .drop .dz-icon { font-size: 44px; animation: floaty 3s ease-in-out infinite; }
+  .drop.over .dz-icon, .drop.busy .dz-icon { animation: wiggle .5s ease-in-out infinite; }
+  @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes wiggle { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg) scale(1.1); } }
+  .drop .dz-t { color: var(--head); font-weight: 700; }
+  .drop .dz-s { color: var(--muted); font-size: 12px; }
+  .drop.busy { pointer-events: none; }
+  .paste { display: flex; flex-direction: column; padding: 12px 14px; gap: 8px; }
+  .paste .ph { color: var(--head); font-weight: 700; }
+  .paste textarea { flex: 1; min-height: 0; resize: none; background: var(--bg); color: var(--text); border: 0; border-radius: 10px;
+    padding: 10px 12px; font: 14px/1.5 "gg sans", "Segoe UI", system-ui, sans-serif; outline: none; }
+  .paste textarea:focus { box-shadow: 0 0 0 2px var(--blurple); }
+  .prow { display: flex; align-items: center; gap: 10px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .lv-bottom { display: grid; grid-template-columns: minmax(220px, 26%) 1fr; gap: 14px; min-height: 0; }
+  .lv-list { display: flex; flex-direction: column; min-height: 0; }
+  .lv-lh { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 4px 8px;
+    display: flex; gap: 8px; align-items: center; }
+  .lv-lh .count { background: var(--card2); color: var(--head); border-radius: 10px; padding: 1px 8px; }
+  #lessonList { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 2px 6px 4px 2px; }
+  .lesson { position: relative; background: var(--lc); color: #2a1a1a; border-radius: 12px; padding: 10px 12px; cursor: pointer; flex: none;
+    border: 3px solid transparent; transition: transform .15s, box-shadow .15s, border-color .15s; }
+  .lesson.new { animation: inPop .45s var(--bounce) both; }
+  .lesson:hover { transform: translateX(4px); box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+  .lesson.view { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.12); }
+  .lesson .li-t { font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 54px; }
+  .lesson .li-t input { width: 100%; font: inherit; border: 0; border-radius: 6px; padding: 1px 6px; background: rgba(255,255,255,.75); color: #2a1a1a; }
+  .lesson .li-s { font-size: 12px; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lesson .li-badge { display: inline-block; margin-top: 5px; font-size: 11px; font-weight: 800; background: rgba(0,0,0,.18); padding: 2px 8px; border-radius: 10px; }
+  .lesson.active .li-badge { background: #2a1a1a; color: #fff; }
+  .lesson .li-acts { position: absolute; top: 7px; right: 7px; display: none; gap: 3px; }
+  .lesson:hover .li-acts { display: flex; }
+  .lesson .li-acts button { width: 24px; height: 24px; border-radius: 6px; background: rgba(0,0,0,.15); font-size: 12px; }
+  .lesson .li-acts button:hover { background: rgba(0,0,0,.32); }
+  .lesson.importing { background: linear-gradient(90deg, var(--lc) 30%, color-mix(in srgb, var(--lc) 55%, #fff) 50%, var(--lc) 70%);
+    background-size: 250% 100%; animation: shimmer 1.3s linear infinite; }
+  @keyframes shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+  .lesson.error { background: #5a3a3d; color: #ffd6d6; }
+  .lv-notes { background: var(--card); border-radius: 14px; display: flex; flex-direction: column; min-height: 0; }
+  #notesHead { display: flex; align-items: center; gap: 10px; padding: 12px 18px 4px; min-height: 44px; }
+  #notesHead h3 { margin: 0; color: var(--head); font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #notesBody { flex: 1; overflow-y: auto; padding: 4px 18px 18px; }
+  .npart { border-left: 4px solid var(--pc); padding: 2px 0 2px 14px; margin: 12px 0 20px; }
+  .npart.new { animation: noteIn .55s var(--bounce) both; }
+  @keyframes noteIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .npart .by { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .npart h3 { margin: 4px 0 6px; color: var(--head); font-size: 17px; }
+  .npart h4 { margin: 10px 0 4px; color: var(--text); font-size: 14px; }
+  .npart ul { margin: 4px 0; padding-left: 20px; } .npart li { margin: 3px 0; }
+  .npart li::marker { color: var(--pc); }
+  .npart p { margin: 6px 0; }
+  .npart .remember { margin-top: 10px; background: color-mix(in srgb, var(--pc) 16%, transparent); border-radius: 10px; padding: 8px 12px; color: var(--head); }
+  .npart .wait { color: var(--muted); font-style: italic; }
+  .n-empty { height: 100%; display: grid; place-items: center; text-align: center; color: var(--muted); padding: 20px; }
+  .n-empty .big { font-size: 46px; margin-bottom: 6px; }
+
+  /* select popup */
+  .mcard.sel { width: min(470px, 92vw); text-align: center; padding: 24px; }
+  .mcard.sel .sel-ico { font-size: 56px; display: inline-block; animation: bookOpen .7s var(--bounce); }
+  .mcard.sel h2 { margin-top: 8px; }
+  .mcard.sel .mrow { justify-content: center; gap: 12px; }
+  @keyframes bookOpen { from { transform: scale(.3) rotate(-25deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* delete popup */
+  .mcard.del .del-ico { font-size: 50px; display: inline-block; animation: binShake .7s var(--bounce); }
+  @keyframes binShake { 0% { transform: scale(.3) rotate(0); opacity: 0; } 50% { transform: scale(1.1) rotate(-12deg); opacity: 1; }
+    75% { transform: rotate(8deg); } 100% { transform: none; } }
+  .mcard.del .del-card { display: inline-flex; align-items: center; gap: 8px; max-width: 90%; margin: 4px 0 12px; padding: 8px 14px;
+    border-radius: 10px; background: var(--lc); color: #2a1a1a; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .b2.danger { background: var(--red); }
+  .b2.danger:hover { background: #d8343a; }
+  .lesson.bye { animation: bye .42s ease-in forwards; pointer-events: none; }
+  @keyframes bye { 30% { transform: translateX(8px) rotate(2deg); } 100% { transform: translateX(-60px) scale(.8); opacity: 0; } }
+
+  /* the students reading the lesson (loading screen) */
+  #prepModal { background: rgba(10, 11, 13, .84); z-index: 12; }
+  .mcard.prep { width: min(780px, 94vw); text-align: center; padding: 26px 28px 30px; }
+  .prep #prepMsg { font-size: 15px; min-height: 22px; }
+  .readers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 22px 0 28px; }
+  .reader { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .reader .rav { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 32px; position: relative;
+    animation: readBob 1.7s ease-in-out infinite; }
+  .reader .rav img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+  @keyframes readBob { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-5px) rotate(4deg); } }
+  .reader .book { font-size: 28px; margin-top: -18px; position: relative; z-index: 1; animation: pageFlip 1s ease-in-out infinite; }
+  @keyframes pageFlip { 0%, 100% { transform: scaleX(1) rotate(-6deg); } 45%, 55% { transform: scaleX(-1) rotate(6deg); } }
+  .reader .rn { font-weight: 700; color: var(--head); font-size: 14px; }
+  .reader .rbar { width: 80%; height: 7px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+  .reader .rbar i { display: block; height: 100%; width: 0; background: var(--rc); border-radius: 4px; transition: width .55s linear; }
+  .reader.done.writing .book { animation: scribble .5s ease-in-out infinite; opacity: 1; }
+  .reader.done.writing .rav { animation: readBob 1s ease-in-out infinite; }
+  @keyframes scribble { 0%, 100% { transform: translateX(-3px) rotate(-10deg); } 50% { transform: translateX(3px) rotate(8deg); } }
+  .reader .ok { position: absolute; right: -8px; bottom: -6px; font-size: 22px; transform: scale(0); transition: transform .4s var(--bounce); }
+  .reader.done .ok { transform: scale(1); }
+  .reader.done .rav { animation: yay .7s var(--bounce) 2; }
+  .reader.done .book { animation: none; opacity: .45; }
+  @keyframes yay { 0% { transform: none; } 40% { transform: translateY(-16px) scale(1.12); } 100% { transform: none; } }
+  .bigbar { height: 18px; border-radius: 10px; background: var(--bg); overflow: hidden; }
+  .bigbar .fill { height: 100%; width: 0; border-radius: 10px; background: linear-gradient(90deg, #5865f2, #b07bff, #23a55a);
+    transition: width .55s linear; position: relative; overflow: hidden; min-width: 18px; }
+  .bigbar .fill::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, rgba(255,255,255,.2) 0 12px, transparent 12px 24px);
+    background-size: 34px 34px; animation: stripes .7s linear infinite; }
+  @keyframes stripes { from { background-position: 0 0; } to { background-position: 34px 0; } }
+  .prep .pct { margin-top: 9px; color: var(--muted); font-weight: 700; }
+  .prep.finished .fill { background: var(--green); }
+  .prep.finished h2 { animation: pop .5s var(--bounce); }
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="side" id="side">
+  <button class="sb-btn" id="sbToggle" title="Open / close the sidebar"><span class="emo">☰</span><span class="lbl">Menu</span></button>
+  <div class="sb-sep"></div>
+  <button class="sb-btn" id="tabLessons" title="Lessons"><span class="emo">📚</span><span class="lbl">Lessons</span></button>
+</nav>
+<main class="main">
+<div class="app">
+  <div class="top">
+    <section class="panel feed-wrap">
+      <div class="feed-head">Questions <span class="count" id="count">0</span></div>
+      <div id="feed"></div>
+      <div class="thinking" id="thinking"></div>
+    </section>
+
+    <section class="panel reveal">
+      <div class="rv-head"><span>Answer</span><span class="grow"></span>
+        <button id="star" title="Save for review (coming soon)" disabled>☆</button></div>
+      <div class="rv-body" id="rvBody"></div>
+      <div class="rv-btns">
+        <button id="more" disabled title="Ask for a simpler explanation">🤔 Explain more</button>
+        <button id="ok" disabled>OK</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel bar" id="bar">
+    <div class="clockbox">
+      <div class="clockrow"><div id="classTime">15:00</div><span id="streak"></span></div>
+      <div class="btnrow">
+        <button class="btn go" id="btnStart">Start</button>
+        <button class="btn stop" id="btnStop" disabled>Stop</button>
+      </div>
+      <div class="mini"><span id="mini"></span><span class="grow"></span>
+        <button class="ico" id="btnSkills" title="Student skills">⚙</button>
+        <button class="ico" id="btnFolder" title="Open the AI-Classroom folder">📁</button></div>
+    </div>
+    <div class="ask" id="ask">
+      <div id="qtype"></div>
+      <div id="qtext" class="wait">Press Start to begin class.</div>
+      <div class="inrow" id="inrow">
+        <textarea id="input" rows="1" placeholder="Type your answer…  (Enter to send)" disabled></textarea>
+        <button id="send" disabled>Send</button>
+      </div>
+      <div id="choices"></div>
+      <div class="ring paused" id="ring">
+        <svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="34"/><circle class="prg" id="ringPrg" cx="40" cy="40" r="34"/></svg>
+        <div class="num" id="ringNum">30</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="lessons" id="lessonsView">
+  <div class="lv-head"><h2>📚 Lessons</h2><span id="lvNow"></span><span class="grow"></span>
+    <button class="ico" id="lvClose" title="Back to class">✕</button></div>
+  <div class="lv-top">
+    <div class="drop" id="drop">
+      <input type="file" id="file" hidden accept=".pdf,.docx,.txt,.md,.markdown,.png,.jpg,.jpeg,.bmp,.gif,.tif,.tiff,.webp">
+      <div class="dz-icon emo">📄</div>
+      <div class="dz-t" id="dzT">Drop a PDF, notes or a picture here</div>
+      <button class="b2 p" id="pickFile">Upload file</button>
+      <div class="dz-s">PDF · Word · TXT · MD · PNG · JPG &nbsp;(pictures and scanned pages are read with Windows OCR)</div>
+    </div>
+    <div class="paste">
+      <div class="ph">✍️ Or paste text</div>
+      <textarea id="pasteText" placeholder="Paste or type the lesson here…" spellcheck="false"></textarea>
+      <div class="prow"><span class="muted" id="pasteCount">0 words</span><span class="grow"></span>
+        <button class="b2 p" id="pasteGo" disabled>Make lesson</button></div>
+    </div>
+  </div>
+  <div class="lv-bottom">
+    <div class="lv-list"><div class="lv-lh">Your lessons <span class="count" id="lessonCount">0</span></div><div id="lessonList"></div></div>
+    <div class="lv-notes"><div id="notesHead"></div><div id="notesBody"></div></div>
+  </div>
+</section>
+</main>
+</div>
+
+<div class="modal" id="selModal">
+  <div class="mcard sel">
+    <div class="sel-ico emo">📘</div>
+    <h2 id="selTitle"></h2>
+    <p id="selSub"></p>
+    <div class="mrow"><button class="b2" id="selNo">✕ Cancel</button><button class="b2 p" id="selYes">✓ Select</button></div>
+  </div>
+</div>
+
+<div class="modal" id="delModal">
+  <div class="mcard sel del">
+    <div class="del-ico emo">🗑️</div>
+    <h2 id="delTitle"></h2>
+    <div class="del-card" id="delCard"><span class="emo">📘</span> <span id="delName"></span></div>
+    <p id="delSub"></p>
+    <div class="mrow"><button class="b2" id="delNo">Keep it</button><button class="b2 danger" id="delYes">🗑 Delete</button></div>
+  </div>
+</div>
+
+<div class="modal" id="prepModal">
+  <div class="mcard prep">
+    <h2>📚 <span id="prepTitle"></span></h2>
+    <p id="prepMsg">The students are reading the lesson…</p>
+    <div class="readers" id="readers"></div>
+    <div class="bigbar"><div class="fill" id="prepFill"></div></div>
+    <div class="pct" id="prepPct">0%</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="combo"><div class="f emo">🔥</div><div class="t" id="comboText">3 in a row!</div></div>
+<div id="dim"></div><div id="sweep"></div><div id="edgeflash"></div><div id="mflash"></div><div id="zflash"></div>
+
+<div class="modal" id="skillModal">
+  <div class="mcard">
+    <h2>⚙ Student skills</h2>
+    <p>Instructions the students follow. Words in {braces} are filled in by the app. Changes apply to the next question.</p>
+    <select id="skillSel"></select>
+    <textarea id="skillText" spellcheck="false"></textarea>
+    <div class="mrow"><button class="b2" id="skillDefault">Reset to default</button><span class="grow"></span>
+      <button class="b2" id="skillClose">Close</button><button class="b2 p" id="skillSave">Save</button></div>
+  </div>
+</div>
+
+<div class="modal" id="endModal">
+  <div class="mcard" style="width:min(620px,94vw)">
+    <h2>🎉 Class over!</h2>
+    <p id="endSub">Here's how the class went.</p>
+    <div class="stats" id="endStats"></div>
+    <div class="mrow"><button class="b2 p" id="endOk">Nice!</button></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const COLORS = ["", "var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)", "var(--c5)"];
+const POPS = ["in-pop", "in-slide", "in-drop", "in-flip", "in-swing", "in-zoom"];
+const RING = 2 * Math.PI * 34;
+const PLACEHOLDER = { fill_blank: "Type the missing word…", spot_mistake: "What's wrong? Fix it…", compare: "Type the difference…",
+  what_if: "What would happen?…", explain_why: "Explain it…", challenge: "Take your time, it's a challenge!…" };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const style = t => esc(t)
+  .replace(/_{5}/g, '<span class="blank"></span>')
+  .replace(/\*\*\*(\S(?:.*?\S)?)\*\*\*/g, '<b class="kw"><i>$1</i></b>')
+  .replace(/\*\*(\S(?:.*?\S)?)\*\*/g, '<b class="kw">$1</b>')
+  .replace(/__(\S(?:.*?\S)?)__/g, '<u class="kw">$1</u>')
+  .replace(/(^|[^*\w])\*(\S(?:[^*]*?\S)?)\*(?![*\w])/g, "$1<i>$2</i>");
+const qhtml = it => it.type === "spot_mistake" ? `<span class="quote">“${style(it.question)}”</span>` : style(it.question);
+const chip = it => it && it.label ? `${it.meteor ? `<span class="chip" style="--tc:#c58bff">☄️ Meteor</span> ` : ""}<span class="chip" style="--tc:var(--t-${it.type})">${esc(it.label)}${it.challenge && it.other ? " · " + esc(it.other) : ""}</span>` : "";
+
+let api = null, S = null, PICS = {}, clockOffset = 0, lastPop = "";
+const cards = new Map(), leaving = new Set();
+let currentId = null, revealedId = null, qStartedAt = 0, starred = new Set(), wasRunning = false;
+let streak = 0, bestStreak = 0, counted = new Set(), moreBusy = false;
+
+/* ---------- sounds: generated, no files ---------- */
+let actx = null;
+function tone(notes, vol = .16) {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    notes.forEach(([f, t, d = .5]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0, actx.currentTime + t);
+      g.gain.linearRampToValueAtTime(vol, actx.currentTime + t + .02);
+      g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + t + d);
+      o.connect(g).connect(actx.destination); o.start(actx.currentTime + t); o.stop(actx.currentTime + t + d + .05);
+    });
+  } catch (e) {}
+}
+const SOUNDS = {
+  challenge: () => tone([[784, 0], [988, .1], [1319, .2, .8]]),
+  lightning: () => tone([[1568, 0, .12], [1175, .06, .12], [1568, .12, .25]], .12),
+  second_chance: () => tone([[1047, 0, .6], [1319, .15, .6], [1568, .3, .9]], .1),
+  silver: () => tone([[1047, 0, .6], [1319, .15, .6], [1568, .3, .9]], .1),
+  streak: () => tone([[392, 0, .2], [523, .08, .2], [659, .16, .2], [784, .24, .6]], .15),
+};
+const ding = type => (SOUNDS[type] || (() => tone([[880, 0], [1320, .12]])))();
+const KIND = { challenge: "gold", silver: "silver", lightning: "bolt", second_chance: "silver", streak: "fire",
+               infected: "infected", boss: "boss" };
+const ENTRANCE = { challenge: "in-gold", silver: "in-coin", lightning: "in-bolt", second_chance: "in-coin", streak: "in-fire" };
+const comboSound = () => tone([[523, 0, .25], [659, .1, .25], [784, .2, .25], [1047, .3, .7]], .14);
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2600);
+}
+function avatar(sid, emoji) {
+  return PICS[sid] ? `<img src="${PICS[sid]}" alt="">` : `<span class="emo">${esc(emoji || "🙂")}</span>`;
+}
+
+/* ---------- feed ---------- */
+const typingPhase = new Set();   // cards still showing "… is typing" (not answerable yet)
+let feedReady = false;           // cards already there when the page loads appear without the typing bubble
+
+function buildCard(el, it, noPop) {
+  let pop = noPop ? "" : ENTRANCE[it.type];
+  if (!pop && !noPop) { do { pop = POPS[Math.floor(Math.random() * POPS.length)]; } while (pop === lastPop); lastPop = pop; }
+  el.className = "card " + pop + (KIND[it.type] ? " " + KIND[it.type] : "");
+  const face = it.type === "boss" ? `<div class="av boss-av"><span class="emo">🧟</span><span class="crown emo">👑</span></div>`
+    : it.claims
+    ? `<div class="duo in-duel">${it.claims.map(c => `<div class="av" style="background:${COLORS[c.sid]}">${avatar(c.sid, c.emoji)}</div>`).join("")}</div>`
+    : `<div class="av" style="background:${COLORS[it.sid] || "var(--card2)"}">${avatar(it.sid, it.emoji)}</div>`;
+  el.innerHTML = `${face}<div class="body">${chip(Object.assign({}, it, { meteor: false }))}<div class="qt"></div>${it.type === "boss" ? hpBar(it) : ""}</div><span class="tag"></span>`;
+  el.querySelector(".qt").innerHTML = qhtml(it);
+  el.dataset.type = it.type; el.dataset.q = it.question; el.dataset.part = it.part || "";
+  if (pop) el.addEventListener("animationend", e => { if (e.animationName.startsWith("in")) el.classList.remove(pop); });
+}
+
+function newCard(it, typed) {
+  const el = document.createElement("div");
+  cards.set(it.id, el);
+  $("feed").appendChild(el);
+  if (!typed) { buildCard(el, it); return; }
+  // 1) a "… is typing" bubble pops in first
+  typingPhase.add(it.id);
+  const who = it.claims || [{ sid: it.sid, emoji: it.emoji, name: it.name }];
+  el.className = "card typing-bubble in-pop";
+  el.innerHTML = `<div class="${who.length > 1 ? "duo" : ""}">${who.map(c => `<div class="av" style="background:${COLORS[c.sid]}">${avatar(c.sid, c.emoji)}</div>`).join("")}</div>
+    <div class="bubble"><span><b>${who.map(c => esc(c.name)).join("</b> and <b>")}</b> ${who.length > 1 ? "are" : "is"} typing</span>
+    <span class="dots"><span></span><span></span><span></span></span></div>`;
+  // 2) …then it grows into the real card, with that card's own entrance
+  setTimeout(() => {
+    typingPhase.delete(it.id);
+    if (cards.get(it.id) !== el || leaving.has(it.id)) return;
+    const h0 = el.offsetHeight;
+    buildCard(el, it);
+    const h1 = el.offsetHeight;
+    el.style.height = h0 + "px"; void el.offsetHeight;
+    el.style.transition = "height .45s var(--bounce)"; el.style.height = h1 + "px";
+    setTimeout(() => { el.style.height = ""; el.style.transition = ""; }, 480);
+    arrivalFx(it, el);
+    if (S) syncFeed();
+  }, 1100);
+}
+
+/* ---------- special arrival effects ---------- */
+function burst(el, emojis, n = 12, spread = 120) {
+  const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement("div"); s.className = "spark emo"; s.textContent = emojis[i % emojis.length];
+    const a = (i / n) * Math.PI * 2 + Math.random() * .4, d = spread * (.6 + Math.random() * .6);
+    s.style.left = cx + "px"; s.style.top = cy + "px";
+    s.style.setProperty("--dx", Math.cos(a) * d + "px"); s.style.setProperty("--dy", Math.sin(a) * d * .6 + "px");
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1100);
+  }
+}
+function replay(node, cls, clearAfter) {
+  node.classList.remove(cls); void node.offsetWidth; node.classList.add(cls);
+  // safety net: overlays switch themselves off even if an animation never finishes
+  if (clearAfter) { clearTimeout(node["_t" + cls]); node["_t" + cls] = setTimeout(() => node.classList.remove(cls), clearAfter); }
+}
+
+/* ---------- 🧟 zombie: bites a card (it gets infected and trembles), after 15 s the infection spreads up or down;
+   answer the bitten card correctly in time to stop it. Reaching a gold card makes a BOSS ---------- */
+let Z = null, fightId = null;
+const groan = () => tone([[110, 0, .7], [98, .25, .8], [117, .55, .7]], .1);
+const chomp = () => tone([[180, 0, .08], [140, .1, .08]], .22);
+const nowSrv = () => (Date.now() + clockOffset) / 1000;
+
+function decorateHost(z) {                            // the bitten card: trembling, green particles, countdown, fight
+  const host = cards.get(z.host);
+  if (!host || host.querySelector(".zcount")) return host;
+  host.classList.add("zhost");
+  host.insertAdjacentHTML("beforeend", `<div class="bitemarks"></div>
+    <span class="zcount">🧟 spreads in <b>15</b>s</span>
+    <button class="fight" data-fight="${z.host}">⚔️ Fight it!</button>`);
+  return host;
+}
+function spawnZombie(z) {
+  removeZombie(true);
+  Z = { id: z.id, host: z.host, state: z.state, sprite: null, particles: null };
+  const host = decorateHost(z);
+  if (host && feedReady) {
+    // the zombie pops up beside the card, chomps twice, then vanishes into it
+    const sp = document.createElement("div"); sp.className = "zombie bite";
+    sp.innerHTML = `<span class="zb emo">🧟</span>`;
+    sp.style.transform = `translate(${$("feed").clientWidth - 170}px, ${host.offsetTop + host.offsetHeight / 2 - 30}px)`;
+    $("feed").appendChild(sp); Z.sprite = sp;
+    groan();
+    setTimeout(() => { chomp(); replay(host, "bitten", 700); replay($("zflash"), "go", 600); burst(host, ["💚", "🦠", "💚"], 10, 110); }, 520);
+    setTimeout(() => chomp(), 820);
+    setTimeout(() => { sp.remove(); if (Z && Z.sprite === sp) Z.sprite = null; }, 1300);
+    toast("🧟 A zombie bit a card! Answer it within 15 s or it spreads!");
+  }
+  Z.particles = setInterval(() => {                    // green particles rise from the bitten card
+    const h = cards.get(Z && Z.host);
+    if (!h || !Z || !["crawling", "judging"].includes(Z.state)) return;
+    const p = document.createElement("i"); p.className = "zpart";
+    p.style.left = (8 + Math.random() * 84) + "%"; p.style.setProperty("--zx", ((Math.random() - .5) * 30) + "px");
+    h.appendChild(p); setTimeout(() => p.remove(), 1600);
+  }, 180);
+}
+function moveZombie() {                                // (name kept) updates the "spreads in Ns" countdown
+  const z = S && S.zombie;
+  if (!Z || !z) return;
+  const host = decorateHost(z);
+  if (!host) return;
+  const c = host.querySelector(".zcount b");
+  if (c) c.textContent = z.state === "crawling" ? Math.max(0, Math.ceil(z.end - nowSrv())) : "…";
+  host.classList.toggle("zfrozen", z.state === "judging");
+}
+function clearHostFx() {
+  document.querySelectorAll(".card.zhost").forEach(c => c.classList.remove("zhost", "zfrozen"));
+  document.querySelectorAll(".card .fight, .card .crack, .card .zcount, .card .bitemarks, .card .zpart").forEach(b => b.remove());
+}
+function removeZombie() {
+  if (!Z) return;
+  clearInterval(Z.particles);
+  if (Z.sprite) Z.sprite.remove();
+  Z = null;
+  clearHostFx();
+  if (fightId) fightId = null;
+}
+function spreadStream(fromEl, toEl) {                  // green particles stream from the bitten card to the next one
+  if (!fromEl || !toEl) return;
+  const a = fromEl.getBoundingClientRect(), b = toEl.getBoundingClientRect();
+  for (let i = 0; i < 16; i++) {
+    const p = document.createElement("div"); p.className = "zstream";
+    const sx = a.left + a.width * (.3 + Math.random() * .5), sy = a.top + a.height / 2;
+    const tx = b.left + b.width * (.3 + Math.random() * .5), ty = b.top + b.height / 2;
+    p.style.left = sx + "px"; p.style.top = sy + "px";
+    p.style.setProperty("--dx", (tx - sx) + "px"); p.style.setProperty("--dy", (ty - sy) + "px");
+    p.style.animationDelay = (i * .04) + "s";
+    document.body.appendChild(p); setTimeout(() => p.remove(), 1200);
+  }
+}
+const zombieEnded = new Set();      // zombies already finished (the app reports them a few more seconds)
+function syncZombie() {
+  const z = S.zombie;
+  if (!z) { if (Z) removeZombie(); return; }
+  if (zombieEnded.has(z.id)) return;
+  if (!Z || Z.id !== z.id) {
+    if (z.state !== "crawling" && z.state !== "judging") { zombieEnded.add(z.id); return; }   // joined late: nothing to show
+    spawnZombie(z);
+  }
+  if (["cured", "arrived", "fizzled"].includes(z.state)) zombieEnded.add(z.id);
+  if (z.state === Z.state) return;
+  Z.state = z.state;
+  const host = cards.get(z.host);
+  if (z.state === "cured") {                            // 💨 cured: green poof, the infection is stopped
+    const r = (host || $("feed")).getBoundingClientRect();
+    for (let i = 0; i < 9; i++) {
+      const s = document.createElement("div"); s.className = "smoke green";
+      s.style.left = (r.left + r.width * .75 - 8) + "px"; s.style.top = (r.top + r.height / 2 - 8) + "px";
+      s.style.setProperty("--dx", ((Math.random() - .5) * 90) + "px"); s.style.animationDelay = (i * .05) + "s";
+      document.body.appendChild(s); setTimeout(() => s.remove(), 1400);
+    }
+    tone([[523, 0, .15], [659, .08, .15], [784, .16, .35]], .1);
+    toast("🧟 Infection stopped! +1 bonus 🔥");
+    removeZombie();
+  } else if (z.state === "arrived") {                    // 🦠 it spreads to the card above or below
+    const t = cards.get(z.target);
+    spreadStream(host, t); groan();
+    setTimeout(() => { if (t) { chomp(); replay(t, "bitten", 900); t.classList.add("infecting"); replay($("zflash"), "go", 700); } }, 600);
+    toast("🧟 The infection spread to the next card!");
+    setTimeout(() => removeZombie(), 700);
+  } else if (z.state === "fizzled") removeZombie();
+}
+$("feed").addEventListener("click", e => {             // ⚔️ fight: answer the zombie's card right now
+  const b = e.target.closest("[data-fight]"); if (!b) return;
+  fightId = +b.dataset.fight; toast("⚔️ Answer it before it reaches the next card!");
+  if (S) syncFeed();
+});
+
+/* card changed by a zombie: infected (rewritten) or a 2-part BOSS */
+function hpBar(it) {
+  const total = it.parts_total || 2, left = it.hp == null ? total : it.hp;
+  return `<div class="hp">${Array.from({ length: total }, (_, k) => `<i class="${k < left ? "" : "broken"}"></i>`).join("")}</div>`;
+}
+function infectFx(el) {
+  el.classList.remove("infecting");
+  replay(el, "zombify", 1100); burst(el, ["💚", "🟩", "🦠"], 12, 140); groan();
+}
+function bossArrive(el) {
+  el.classList.remove("infecting");
+  replay($("zflash"), "go", 900); replay(document.querySelector(".app"), "quake", 650);
+  tone([[65, 0, .9], [55, .1, 1], [82, .3, .8]], .3);
+  burst(el, ["💀", "💚", "👑", "🦴"], 18, 220);
+  replay(el, "in-boss", 1200);
+  toast("👑 The zombie reached a gold card… a ZOMBIE BOSS appeared!");
+}
+function bossHit(el, it) {
+  replay(el, "hit", 900); replay($("zflash"), "go", 500);
+  tone([[196, 0, .15], [147, .07, .3]], .2);
+  burst(el, ["💥", "💚", "⭐"], 12, 150);
+  toast(`💥 Hit! Part ${it.part} of ${it.parts_total}…`);
+}
+let comboQuietUntil = 0;           // the boss banner shouldn't be overwritten by the streak combo
+function bossVictory() {
+  comboQuietUntil = Date.now() + 3000;
+  const c = $("combo");
+  $("comboText").textContent = "👑 BOSS DEFEATED! +5";
+  c.querySelector(".f").textContent = "🧟";
+  c.classList.remove("go"); void c.offsetWidth; c.classList.add("go");
+  setTimeout(() => { c.querySelector(".f").textContent = "🔥"; }, 1800);
+  tone([[523, 0, .2], [659, .12, .2], [784, .24, .2], [1047, .36, .35], [1319, .5, .8]], .14);
+  const box = document.createElement("div"); box.style.cssText = "position:fixed;left:50%;top:40%;width:2px;height:2px";
+  document.body.appendChild(box);
+  confetti(box, "#3ddc84"); setTimeout(() => confetti(box, "#f5c542"), 200);
+  setTimeout(() => box.remove(), 1600);
+}
+
+/* ☄️ meteor: a purple asteroid streaks in, smashes into a waiting card, and the card becomes a meteor card */
+const meteorDone = new Set();
+function makeMeteorCard(el) {
+  el.classList.add("meteor");
+  const body = el.querySelector(".body");
+  if (body && !body.querySelector(".chip.mchip")) body.insertAdjacentHTML("afterbegin", `<span class="chip mchip">☄️ Meteor</span> `);
+}
+function meteorStrike(el, it) {
+  el.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  setTimeout(() => {
+    const r = el.getBoundingClientRect();
+    const tx = r.left + r.width * .5, ty = r.top + r.height / 2;
+    const m = document.createElement("div"); m.className = "meteor-fly";
+    m.innerHTML = `<div class="rock"></div><div class="tail"></div>`;
+    m.style.setProperty("--sx", (innerWidth + 120) + "px"); m.style.setProperty("--sy", "-160px");
+    m.style.setProperty("--tx", tx + "px"); m.style.setProperty("--ty", ty + "px");
+    document.body.appendChild(m);
+    // trail of purple sparks behind it
+    const trail = setInterval(() => {
+      const b = m.getBoundingClientRect(); if (!b.width) return;
+      const s = document.createElement("div"); s.className = "mtrail";
+      s.style.left = (b.left + b.width / 2) + "px"; s.style.top = (b.top + b.height / 2) + "px";
+      document.body.appendChild(s); setTimeout(() => s.remove(), 600);
+    }, 30);
+    tone([[220, 0, .6], [330, .15, .5], [440, .3, .4]], .06);           // incoming whoosh
+    setTimeout(() => {                                                    // 💥 impact
+      clearInterval(trail); m.remove();
+      tone([[70, 0, .5], [52, .04, .6], [110, 0, .25]], .32);
+      // no screen shake (it made it dizzy): only the struck card jolts
+      replay($("mflash"), "go", 700);
+      const ring = document.createElement("div"); ring.className = "shock";
+      ring.style.left = tx + "px"; ring.style.top = ty + "px";
+      document.body.appendChild(ring); setTimeout(() => ring.remove(), 800);
+      burst(el, ["🪨", "💜", "✨", "🪨"], 18, 200);
+      makeMeteorCard(el);
+      replay(el, "hit", 900);
+    }, 700);
+  }, 250);
+}
+
+function arrivalFx(it, el) {
+  if (it.type === "challenge") {                       // ⭐ dim, gold sweep, heavy landing, sparkles
+    $("dim").classList.add("on"); el.classList.add("spot");
+    replay($("sweep"), "go", 1000);
+    tone([[98, .35, .3], [73, .4, .35]], .3);           // the "thunk"
+    setTimeout(() => { replay($("feed"), "thunk", 400); burst(el, ["✨", "⭐", "✨"], 16, 170); }, 380);
+    setTimeout(() => { $("dim").classList.remove("on"); el.classList.remove("spot"); }, 1300);
+  } else if (it.type === "silver" || it.type === "second_chance") {   // 🥈 coin spin + glint
+    tone([[2093, .75, .25], [2637, .82, .4]], .07);
+    setTimeout(() => replay(el, "glint", 700), 900);
+  } else if (it.type === "lightning") {                // ⚡ screen-edge flash + zig-zag bolt across the card
+    replay($("edgeflash"), "go", 700);
+    const w = el.offsetWidth, h = el.offsetHeight, pts = [];
+    for (let x = -10, k = 0; x <= w + 10; x += w / 9, k++) pts.push(`${x.toFixed(0)},${(k % 2 ? h * .25 : h * .75).toFixed(0)}`);
+    const zap = document.createElement("div"); zap.className = "zap";
+    zap.innerHTML = `<svg width="${w}" height="${h}"><polyline points="${pts.join(" ")}"/></svg>`;
+    el.appendChild(zap);
+    const line = zap.querySelector("polyline"), len = line.getTotalLength ? line.getTotalLength() : 1500;
+    line.style.strokeDasharray = len; line.style.strokeDashoffset = len;
+    setTimeout(() => zap.remove(), 900);
+  } else if (it.type === "streak") {                   // 🔥 flames rise from the bottom of the feed
+    const box = document.createElement("div"); box.className = "flames";
+    for (let i = 0; i < 14; i++) {
+      const f = document.createElement("span"); f.className = "emo"; f.textContent = "🔥";
+      f.style.left = (4 + Math.random() * 92) + "%"; f.style.animationDelay = (Math.random() * .35) + "s";
+      f.style.fontSize = (22 + Math.random() * 22) + "px";
+      box.appendChild(f);
+    }
+    document.querySelector(".feed-wrap").appendChild(box);
+    setTimeout(() => box.remove(), 1700);
+  }
+}
+
+function removeCard(id, how) {
+  const el = cards.get(id);
+  if (!el || leaving.has(id)) return;
+  leaving.add(id);
+  el.classList.remove("now", "tense", "happy", "wobble", "headshake", "hit", "bitten", "infecting", "zombify", "in-boss",
+                      ...Object.values(ENTRANCE), ...POPS);
+  el.classList.add(how === "time" ? "out-time" : "out-left");
+  let gone = false;
+  const finish = () => {
+    if (gone) return; gone = true;
+    // FLIP: remember where the other cards are, remove this one, then let them glide (and bounce) up
+    const others = [...$("feed").children].filter(c => c !== el);
+    const before = new Map(others.map(c => [c, c.getBoundingClientRect().top]));
+    el.remove(); cards.delete(id); leaving.delete(id);
+    others.forEach(c => {
+      const d = before.get(c) - c.getBoundingClientRect().top;
+      if (!d) return;
+      c.style.transition = "none"; c.style.transform = `translateY(${d}px)`;
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        c.style.transition = "transform .55s var(--bounce)"; c.style.transform = "";
+        setTimeout(() => { c.style.transition = ""; }, 600);
+      }));
+    });
+  };
+  el.addEventListener("animationend", e => { if (e.animationName.startsWith("out")) finish(); });
+  setTimeout(finish, how === "time" ? 1000 : 700);
+}
+
+const verdictWord = v => ({ CORRECT: "CORRECT", PARTLY: "PARTLY", WRONG: "NOT QUITE" }[v] || v);
+
+function syncFeed() {
+  const ids = new Set(S.items.map(i => i.id));
+  for (const it of S.items) if (!cards.has(it.id) && !leaving.has(it.id)) {
+    if (it.instant && feedReady && S.running) {     // a slot freed up: the next card appears right away (no typing bubble)
+      newCard(it, false); arrivalFx(it, cards.get(it.id));
+    } else newCard(it, feedReady && S.running);
+  }
+  for (const it of S.items) {                        // ☄️ a meteor just hit one of the waiting cards
+    const el = cards.get(it.id);
+    if (it.meteor && el && !typingPhase.has(it.id) && !meteorDone.has(it.id)) {
+      meteorDone.add(it.id);
+      feedReady && S.running ? meteorStrike(el, it) : makeMeteorCard(el);
+    }
+  }
+  for (const it of S.items) {                        // 🧟 cards a zombie changed: infected (rewritten) or BOSS
+    const el = cards.get(it.id);
+    if (!el || typingPhase.has(it.id) || leaving.has(it.id)) continue;
+    if (el.dataset.type && el.dataset.type !== it.type && (it.type === "infected" || it.type === "boss")) {
+      const keepNow = el.classList.contains("now");
+      buildCard(el, it, true);
+      if (it.meteor) makeMeteorCard(el);
+      if (keepNow) el.classList.add("now");
+      feedReady ? (it.type === "boss" ? bossArrive(el) : infectFx(el)) : null;
+      if (it.id === currentId) refreshCurrentText(it);
+    } else if (it.type === "boss" && String(it.part || "") !== el.dataset.part) {
+      const prevPart = +el.dataset.part || 1;
+      el.dataset.part = it.part; el.dataset.q = it.question;
+      el.querySelector(".qt").innerHTML = qhtml(it);
+      const hp = el.querySelector(".hp"); if (hp) hp.outerHTML = hpBar(it);
+      if (it.part > prevPart && feedReady) bossHit(el, it);
+      if (it.id === currentId) refreshCurrentText(it);
+    }
+    if (!it.infecting) el.classList.remove("infecting");
+  }
+  for (const [id] of cards) if (!ids.has(id) && !leaving.has(id) && id !== revealedId) removeCard(id, "left");
+  if (S.running) feedReady = true;
+  const open = S.items.filter(i => i.status === "queued" && !leaving.has(i.id) && !typingPhase.has(i.id) && !i.infecting);
+  let nowId = revealedId ? null : (open[0] ? open[0].id : null);
+  if (fightId && !open.some(i => i.id === fightId)) fightId = null;
+  if (!revealedId && fightId) nowId = fightId;      // ⚔️ fighting the zombie: its card jumps to the front
+  for (const it of S.items) {
+    const el = cards.get(it.id); if (!el || typingPhase.has(it.id)) continue;
+    const isNow = it.id === nowId, isDone = it.id === revealedId;
+    el.classList.toggle("now", isNow); el.classList.toggle("done", isDone);
+    ["CORRECT", "PARTLY", "WRONG"].forEach(v => el.classList.toggle("v-" + v, isDone && it.verdict === v));
+    const tag = el.querySelector(".tag");
+    tag.textContent = isNow ? "NOW" : isDone ? (it.verdict ? verdictWord(it.verdict) : "CHECKING") : "";
+    tag.style.display = (isNow || isDone) ? "" : "none";
+  }
+  $("count").textContent = S.items.filter(i => i.status === "queued").length;
+  if (!S.running && !S.items.length) {
+    if (!$("feed").querySelector(".empty"))
+      $("feed").innerHTML = S.lesson_id ? `<div class="empty"><div><div class="big">🏫</div><h2>Ready for class?</h2>
+        Press <b>Start</b>. Byte, Pixel, Mochi, Ribbit and Whiskers will send you questions about <b>${esc(S.lesson)}</b>.
+        <br><span class="muted">Want another lesson? Open ☰ → 📚 Lessons.</span></div></div>`
+        : `<div class="empty"><div><div class="big">📚</div><h2>Pick a lesson first</h2>
+        Open the ☰ sidebar, then <b>📚 Lessons</b>: upload a PDF, notes or a picture, or paste some text.</div></div>`;
+  } else { const e = $("feed").querySelector(".empty"); if (e) e.remove(); }
+  if (nowId !== currentId) setCurrent(nowId);
+}
+
+/* ---------- current question + 30 s timer ---------- */
+function setCurrent(id) {
+  currentId = id;
+  const it = S.items.find(i => i.id === id);
+  const q = $("qtext");
+  q.classList.remove("swap"); void q.offsetWidth;
+  if (it) {
+    themeBar(it);
+    $("qtype").innerHTML = chip(it);
+    q.innerHTML = qhtml(it); q.className = "swap";
+    qStartedAt = Date.now();
+    const pick = it.type === "pick_one", duel = it.type === "whos_right";
+    $("inrow").style.display = pick || duel ? "none" : "";
+    $("choices").classList.toggle("show", pick || duel);
+    $("choices").classList.toggle("two", duel);
+    if (pick) {
+      $("choices").innerHTML = it.choices.map((c, i) => `<button data-i="${i}"><span class="k">${"ABC"[i]}</span><span>${esc(c)}</span></button>`).join("");
+    } else if (duel) {
+      $("choices").innerHTML = it.claims.map((c, i) => `<button data-i="${i}"><span class="k emo">${esc(c.emoji)}</span>
+        <span class="say"><b>${esc(c.name)} says</b><span>${esc(c.text)}</span></span></button>`).join("") + `<span class="vs">VS</span>`;
+    } else {
+      $("input").placeholder = (PLACEHOLDER[it.type] || "Type your answer…") + "  (Enter to send)";
+      $("input").disabled = false; $("send").disabled = false; if (!LV.open) $("input").focus();
+    }
+    ding(it.type);
+    $("ring").classList.toggle("bolt", it.type === "lightning");
+    showLocked();
+  } else if (!revealedId) {
+    themeBar(null);
+    $("qtype").innerHTML = "";
+    q.className = "wait swap";
+    q.textContent = S.running ? "Waiting for the next question…" : "Press Start to begin class.";
+    $("inrow").style.display = ""; $("choices").classList.remove("show");
+    $("input").disabled = true; $("send").disabled = true;
+    if (S.running) showLocked(); else showIdle();
+  }
+}
+
+function tickRing() {
+  const ring = $("ring"), prg = $("ringPrg");
+  prg.style.strokeDasharray = RING;
+  const calm = () => { document.querySelectorAll(".card.tense").forEach(c => c.classList.remove("tense")); $("bar").classList.remove("heartbeat"); };
+  if (!S || !S.running || !currentId || revealedId) {
+    calm();
+    ring.classList.add("paused"); ring.classList.remove("warn", "danger");
+    prg.style.strokeDashoffset = 0; $("ringNum").textContent = S ? S.question_seconds : 30; return;
+  }
+  const it = S.items.find(i => i.id === currentId);
+  const total = ((it && it.seconds) || S.question_seconds) * 1000;   // ⚡ 10 s, 🥈 45 s, ⭐ 60 s, 🔥 37 s, normal 30 s
+  const left = Math.max(0, total - (Date.now() - qStartedAt));
+  ring.classList.remove("paused");
+  ring.classList.toggle("warn", left <= 10000 && left > 5000);
+  ring.classList.toggle("danger", left <= 5000);
+  prg.style.strokeDashoffset = RING * (1 - left / total);
+  $("ringNum").textContent = Math.ceil(left / 1000);
+  const card = cards.get(currentId);                   // tension: trembling card < 5 s, heartbeat bar < 3 s
+  if (card) card.classList.toggle("tense", left <= 5000 && left > 0);
+  $("bar").classList.toggle("heartbeat", left <= 3000 && left > 0);
+  if (left <= 0) timeUp();
+}
+
+async function timeUp() {
+  const id = currentId; if (!id) return;
+  currentId = null; removeCard(id, "time");
+  $("input").value = ""; $("input").disabled = true; $("send").disabled = true; $("choices").classList.remove("show");
+  toast("⏱ Time's up! Saved for later. Next question…");
+  await api.skip(id);
+  await refresh();
+}
+
+/* ---------- answer effects: stamp + card motion + confetti ---------- */
+function confetti(el, color) {
+  const r = el.getBoundingClientRect(), cx = r.left + r.width * .7, cy = r.top + r.height / 2;
+  const cols = [color, color, color, "#ffffff", "#ffd166"];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement("div"); p.className = "confetti";
+    p.style.background = cols[i % cols.length]; p.style.left = cx + "px"; p.style.top = cy + "px";
+    p.style.width = (6 + Math.random() * 5) + "px"; p.style.height = (8 + Math.random() * 7) + "px";
+    p.style.setProperty("--dx", ((Math.random() - .5) * 300) + "px");
+    p.style.setProperty("--up", (-(50 + Math.random() * 100)) + "px");
+    p.style.setProperty("--down", (90 + Math.random() * 130) + "px");
+    p.style.setProperty("--rot", (Math.random() * 720 - 360) + "deg");
+    p.style.animationDelay = (Math.random() * .08) + "s";
+    document.body.appendChild(p); setTimeout(() => p.remove(), 1500);
+  }
+}
+const shownVerdict = new Set();
+function answerFx(it) {
+  if (shownVerdict.has(it.id)) return;
+  shownVerdict.add(it.id);
+  const el = cards.get(it.id); if (!el) return;
+  el.querySelectorAll(".stamp").forEach(s => s.remove());
+  const st = document.createElement("div"); st.className = "stamp emo";
+  if (it.verdict === "CORRECT") {          // happy bounce, ✅ slams down, confetti in the student's colour
+    st.textContent = "✅"; st.classList.add("slam");
+    replay(el, "happy", 750); confetti(el, COLORS[it.sid] || "var(--green)");
+    tone([[784, 0, .18], [1047, .09, .35]], .12);
+  } else if (it.verdict === "PARTLY") {    // small wobble only (the PARTLY tag says it)
+    replay(el, "wobble", 700); tone([[660, 0, .3]], .09);
+    return;
+  } else {                                 // gentle head-shake, ❌ that fades away (calm, not dramatic)
+    st.textContent = "❌"; st.classList.add("soft");
+    replay(el, "headshake", 800); tone([[330, 0, .25], [262, .12, .35]], .07);
+  }
+  el.appendChild(st);
+}
+
+/* ---------- explanation types itself out, then keywords light up one by one ---------- */
+function typeOut(el, start = 0, perWord = 30) {
+  if (!el) return start;
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), texts = [];
+  while (walker.nextNode()) texts.push(walker.currentNode);
+  let i = 0;
+  texts.forEach(t => {
+    const frag = document.createDocumentFragment();
+    t.textContent.split(/(\s+)/).forEach(part => {
+      if (!part) return;
+      if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(part)); return; }
+      const s = document.createElement("span"); s.className = "w"; s.textContent = part;
+      s.style.animationDelay = (start + i++ * perWord) + "ms";
+      frag.appendChild(s);
+    });
+    t.parentNode.replaceChild(frag, t);
+  });
+  const end = start + i * perWord;
+  [...el.querySelectorAll("b.kw, u.kw")].forEach((k, j) => { k.style.setProperty("--gd", (end + 150 + j * 400) + "ms"); k.classList.add("glow"); });
+  return end;
+}
+
+/* ---------- streaks: a flame that grows and changes colour ---------- */
+let shownStreak = 0;
+const flameLevel = n => n >= 10 ? "lv10" : n >= 7 ? "lv7" : n >= 5 ? "lv5" : n >= 3 ? "lv3" : "lv1";
+function renderStreak(n, pop, forceShow) {
+  const el = $("streak");
+  el.className = (n >= 2 || forceShow) ? "show " + flameLevel(n) : "";
+  el.innerHTML = `<span class="fl emo">🔥</span><span class="n">${n}</span>
+    <span class="embers"><i></i><i></i><i></i><i></i><i></i><i></i></span>`;
+  if (pop) replay(el.querySelector(".n"), "tick", 450);
+}
+function smokeOut() {                       // streak lost: the flame puffs out into grey smoke
+  const el = $("streak");
+  if (!el.classList.contains("show")) return;
+  el.classList.add("puff");
+  const r = el.querySelector(".fl").getBoundingClientRect();
+  for (let i = 0; i < 7; i++) {
+    const s = document.createElement("div"); s.className = "smoke";
+    s.style.left = (r.left + r.width / 2 - 8) + "px"; s.style.top = (r.top + r.height / 2 - 8) + "px";
+    s.style.setProperty("--dx", ((Math.random() - .5) * 50) + "px"); s.style.animationDelay = (i * .06) + "s";
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1300);
+  }
+  setTimeout(() => { el.className = ""; el.innerHTML = ""; }, 850);
+}
+function flyIn(from, to) {                  // +3: little flames fly from the answer into the counter, one by one
+  renderStreak(from, false, true);
+  const src = ($("verdict") || cards.get(revealedId) || $("streak")).getBoundingClientRect();
+  const dst = $("streak").querySelector(".fl").getBoundingClientRect();
+  const n = Math.min(to - from, 5);
+  for (let k = 0; k < n; k++) {
+    const f = document.createElement("div"); f.className = "flyer emo"; f.textContent = "🔥";
+    const sx = src.left + src.width / 2 - 13, sy = src.top + src.height / 2 - 13, tx = dst.left, ty = dst.top;
+    f.style.setProperty("--sx", sx + "px"); f.style.setProperty("--sy", sy + "px");
+    f.style.setProperty("--tx", tx + "px"); f.style.setProperty("--ty", ty + "px");
+    f.style.setProperty("--mx", ((sx + tx) / 2 + (k - 1) * 60) + "px"); f.style.setProperty("--my", (Math.min(sy, ty) - 90 - k * 20) + "px");
+    f.style.animationDelay = (k * .18) + "s";
+    document.body.appendChild(f);
+    setTimeout(() => {
+      f.remove();
+      if (streak !== to) return;              // the streak changed meanwhile (e.g. reset): don't bring the old number back
+      shownStreak = k === n - 1 ? to : shownStreak + 1;
+      renderStreak(shownStreak, true, true);
+      tone([[880 + k * 120, 0, .15]], .08);
+    }, 750 + k * 180);
+  }
+}
+function setStreak(n) {
+  // the engine keeps the real streak (a 🔥 streak card adds +3); this shows it
+  const old = streak; streak = n; bestStreak = Math.max(bestStreak, n);
+  if (n === old) return;
+  const marks = [3, 5, 7, 10, 15, 20, 25, 30];
+  const comboAt = n > old && marks.some(m => old < m && n >= m);
+  if (n === 0) { if (shownStreak >= 2) smokeOut(); shownStreak = 0; return; }
+  if (n - old >= 2) {
+    toast(`🔥 +${n - old} streak!`);
+    flyIn(old, n);
+    if (comboAt) setTimeout(() => combo(n), 1300);
+    return;
+  }
+  shownStreak = n; renderStreak(n, true);
+  if (comboAt) combo(n);
+}
+function combo(n) {
+  if (Date.now() < comboQuietUntil) return;
+  const c = $("combo");
+  $("comboText").textContent = n >= 10 ? `${n} in a row! UNSTOPPABLE!` : n >= 5 ? `${n} in a row! On fire!` : `${n} in a row!`;
+  c.classList.remove("go"); void c.offsetWidth; c.classList.add("go");
+  comboSound();
+  const cx = innerWidth / 2, cy = innerHeight * .4;
+  for (let i = 0; i < 14; i++) {
+    const s = document.createElement("div"); s.className = "spark emo"; s.textContent = ["✨", "⭐", "🔥"][i % 3];
+    const a = (i / 14) * Math.PI * 2, r = 140 + Math.random() * 90;
+    s.style.left = cx + "px"; s.style.top = cy + "px";
+    s.style.setProperty("--dx", Math.cos(a) * r + "px"); s.style.setProperty("--dy", Math.sin(a) * r + "px");
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1100);
+  }
+}
+function countVerdict() {}   // streak now comes from the engine (S.streak)
+
+/* ---------- reveal panel ---------- */
+function resetPanelButtons() {
+  $("ok").disabled = true; $("more").disabled = true; $("more").textContent = "🤔 Explain more";
+  $("star").disabled = true; $("star").classList.remove("on"); $("star").textContent = "☆";
+}
+function showIdle() {
+  $("rvBody").innerHTML = `<div class="empty"><div><div class="big">💡</div>Answers and explanations show up here after you answer.</div></div>`;
+  resetPanelButtons();
+}
+function showLocked() {
+  if (revealedId) return;
+  $("rvBody").innerHTML = `<div class="lines"><span style="width:92%"></span><span style="width:78%"></span><span style="width:86%"></span>
+    <span style="width:64%"></span><span style="width:90%"></span><span style="width:72%"></span><span style="width:82%"></span></div>
+    <div class="lock">🔒 Answer the question to reveal the explanation</div>`;
+  resetPanelButtons();
+}
+function showReveal(it, r, mine, choice) {
+  let picked = "";
+  if (it.type === "whos_right") {
+    picked = `<div class="picked">${it.claims.map((c, i) => `<div class="${i === r.correct ? "right" : ""} ${i === choice ? "mine" : ""} ${i === choice && i !== r.correct ? "wrong" : ""}">
+      ${i === r.correct ? "✅" : "❌"} <span class="emo">${esc(c.emoji)}</span> <b>${esc(c.name)}:</b> ${esc(c.text)}</div>`).join("")}</div>`;
+  } else if (it.type === "pick_one") {
+    const mi = "ABC".indexOf(mine[0]);
+    picked = `<div class="picked">${it.choices.map((c, i) => `<div class="${i === r.correct ? "right" : ""} ${i === mi ? "mine" : ""} ${i === mi && i !== r.correct ? "wrong" : ""}">
+      ${i === r.correct ? "✅" : i === mi ? "❌" : "▫️"} ${"ABC"[i]}) ${esc(c)}</div>`).join("")}</div>`;
+  }
+  $("rvBody").innerHTML = `<div class="rv-content">
+      <div class="who"><span class="emo">${esc(it.emoji)}</span>${esc(it.name)} explains</div>
+      <div class="explain">${style(r.answer)}</div>${picked}
+      <div class="you"><div class="lbl">You said <span class="verdict pending" id="verdict">checking…</span></div>${esc(mine)}</div>
+      <div class="more auto" id="autoBox"><div class="lvl">📖 Explanation</div>
+        <div class="tx">${r.explanation ? style(r.explanation) : `<span class="dots"><span></span><span></span><span></span></span>`}</div></div>
+      <div id="moreBox"></div>
+    </div>`;
+  // the answer types itself out, then the explanation, then keywords light up
+  const t1 = typeOut(document.querySelector("#rvBody .explain"), 250);
+  if (r.explanation) { $("autoBox").dataset.done = "1"; typeOut($("autoBox").querySelector(".tx"), t1 + 250); }
+  $("ok").disabled = false; $("more").disabled = false; $("star").disabled = false;
+  $("more").textContent = "🤔 Still confused?";
+  $("star").classList.toggle("on", starred.has(it.id)); $("star").textContent = starred.has(it.id) ? "★" : "☆";
+  $("ok").focus();
+}
+function updateReveal() {
+  if (!revealedId) return;
+  const it = S.items.find(i => i.id === revealedId); if (!it) return;
+  const v = $("verdict");
+  if (it.verdict && v && !v.classList.contains(it.verdict)) {
+    const redeemed = it.type === "second_chance" && it.verdict === "CORRECT";
+    v.className = "verdict " + it.verdict + (redeemed ? " REDEEMED" : "");
+    v.textContent = redeemed ? "🥈 Redeemed!" : it.type === "streak" && it.verdict === "CORRECT" ? "🔥 Correct! +3"
+      : it.type === "boss" ? (it.verdict === "CORRECT" ? "👑 Boss defeated! +5" : "🧟 The boss won this time")
+      : { CORRECT: "✅ Correct!", PARTLY: "🤏 Partly right", WRONG: "❌ Not quite" }[it.verdict];
+    answerFx(it);
+  }
+  const ab = $("autoBox");
+  if (it.explanation && ab && !ab.dataset.done) {        // explanation arrived after the reveal
+    ab.dataset.done = "1";
+    ab.querySelector(".tx").innerHTML = style(it.explanation);
+    typeOut(ab.querySelector(".tx"), 0);
+  }
+}
+
+/* ---------- actions ---------- */
+/* the bottom question bar takes on the current card's look (gold, silver, lightning, fire, meteor, zombie, boss) */
+function themeBar(it) {
+  const bar = $("bar");
+  const kind = !it ? "" : it.type === "boss" ? "boss" : it.type === "infected" ? "infected" : it.meteor ? "meteor" : (KIND[it.type] || "");
+  const old = bar.dataset.kind || "";
+  [...bar.classList].filter(c => c.startsWith("k-")).forEach(c => bar.classList.remove(c));   // keeps "heartbeat" etc.
+  if (kind) bar.classList.add("k-" + kind);
+  bar.dataset.kind = kind;
+  if (kind && kind !== old) replay(bar, "kswap", 950);
+}
+
+/* update the bottom bar's question without restarting the timer (boss part 2, infected rewrite) */
+function refreshCurrentText(it) {
+  themeBar(it);
+  $("qtype").innerHTML = chip(it);
+  const q = $("qtext"); q.innerHTML = qhtml(it);
+  q.classList.remove("swap"); void q.offsetWidth; q.classList.add("swap");
+}
+let bossPendingId = null;
+function syncBoss() {                               // 👑 waiting for a boss part to be judged
+  if (!bossPendingId) return;
+  const b = S.items.find(i => i.id === bossPendingId);
+  if (!b) { bossPendingId = null; return; }
+  if (b.judging) return;
+  bossPendingId = null;
+  if (b.status === "answered") {                    // boss beaten (or it won): reveal like any other card
+    revealedId = b.id; currentId = null; fightId = null;
+    showReveal(b, { answer: b.answer, explanation: b.explanation, verdict: b.verdict }, b.teacher_answer);
+    updateReveal();
+    if (b.verdict === "CORRECT") bossVictory();
+  } else {                                          // hit! part 2 is up: same card, same timer
+    $("input").disabled = false; $("send").disabled = false; $("input").value = ""; $("input").focus();
+  }
+}
+
+async function send(choice) {
+  const text = choice !== undefined ? "ABC"[choice] : $("input").value.trim();
+  if (!text || !currentId || revealedId || bossPendingId) return;
+  const id = currentId, it = S.items.find(i => i.id === id);
+  $("input").disabled = true; $("send").disabled = true;
+  $("choices").querySelectorAll("button").forEach(b => b.disabled = true);
+  const r = await api.answer(id, text);
+  if (!r.ok) { toast(r.error); $("input").disabled = false; $("send").disabled = false;
+    $("choices").querySelectorAll("button").forEach(b => b.disabled = false); return; }
+  if (r.boss) {                                     // ⚔️ strike the boss: wait for the hit to be judged
+    bossPendingId = id; $("input").value = ""; grow();
+    $("qtype").innerHTML = chip(it) + ` <span class="chip" style="--tc:#3ddc84">⚔️ Striking…</span>`;
+    return;
+  }
+  if (it.type === "pick_one" || it.type === "whos_right") {
+    const btns = $("choices").querySelectorAll("button");
+    btns[r.correct].classList.add("right");
+    if (choice !== r.correct) btns[choice].classList.add("wrong");
+  }
+  revealedId = id; currentId = null; $("input").value = ""; grow();
+  const mine = it.type === "pick_one" ? `${"ABC"[choice]}) ${it.choices[choice]}`
+             : it.type === "whos_right" ? `${it.claims[choice].name} is right` : text;
+  showReveal(it, r, mine, choice);
+  if (r.verdict) { it.verdict = r.verdict; updateReveal(); }
+  await refresh();
+}
+
+async function explainMore() {
+  if (!revealedId || moreBusy) return;
+  moreBusy = true;
+  const b = $("more"); b.disabled = true; b.innerHTML = `<span class="dots"><span></span><span></span><span></span></span>`;
+  const r = await api.explain_more(revealedId);
+  moreBusy = false;
+  if (!r.ok) { toast(r.error); b.textContent = "🤔 Explain more"; b.disabled = false; return; }
+  const lvl = ["", "Simpler", "Even simpler", "A little story"][r.level] || "More";   // level 1 = the automatic one
+  const d = document.createElement("div"); d.className = "more";
+  d.innerHTML = `<div class="lvl">🤔 ${lvl}</div><div class="tx">${style(r.text)}</div>`;
+  $("moreBox").appendChild(d);
+  typeOut(d.querySelector(".tx"), 150);
+  d.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  b.textContent = r.max ? "That's all for this one!" : "🤔 Still confused?";
+  b.disabled = !!r.max;
+}
+
+async function ok() {
+  if (!revealedId) return;
+  const id = revealedId;
+  const it = S.items.find(i => i.id === id); countVerdict(it);
+  revealedId = null;
+  removeCard(id, "left");
+  const c = $("rvBody").firstElementChild; if (c) c.style.animation = "outLeft .35s ease-in forwards";
+  resetPanelButtons();
+  $("choices").classList.remove("show"); $("inrow").style.display = "";
+  await api.dismiss(id);
+  setTimeout(async () => { await refresh(); if (!currentId) setCurrent(null); }, 360);
+}
+
+function clearClassUI() {                       // a new class (or a new lesson): empty feed, panel and streak
+  cards.clear(); $("feed").innerHTML = ""; revealedId = null; currentId = null; starred = new Set();
+  feedReady = true; typingPhase.clear(); meteorDone.clear(); removeZombie(true); fightId = null; bossPendingId = null;
+  counted = new Set(); bestStreak = 0; streak = 0; shownStreak = 0; renderStreak(0); shownVerdict.clear();
+  resetPanelButtons(); showIdle();
+}
+
+async function start() {
+  $("btnStart").disabled = true;
+  const r = await api.start();
+  if (!r.ok) { toast(r.error); $("btnStart").disabled = false; return; }
+  clearClassUI();
+  toast("🏫 Class started! Questions are on the way…");
+  await refresh();
+}
+
+async function stop(auto) {
+  const r = await api.stop();
+  revealedId = null; currentId = null;
+  await refresh();
+  setCurrent(null);
+  if (r && r.ok) showReport(r.stats, auto);
+}
+
+function showReport(s, auto) {
+  $("endSub").textContent = auto ? "Time's up! Here's how the class went." : "Here's how the class went.";
+  $("endStats").innerHTML = [["✅", s.correct, "correct"], ["🟡", s.partly, "partly"], ["❌", s.wrong, "not quite"], ["⏱", s.timeout, "skipped"],
+    ["🔥", Math.max(bestStreak, s.best_streak || 0), "best streak"], ["⭐", s.challenges, "challenges won"],
+    ["🥈", s.redeemed || 0, "redeemed"], ["🤔", s.help, "extra explanations"]]
+    .map(([e, n, l], i) => `<div class="stat" style="animation-delay:${i * .06}s"><div class="emo" style="font-size:22px">${e}</div><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  $("endModal").classList.add("open");
+}
+
+/* ---------- polling + clocks ---------- */
+let busy = false;
+async function refresh() {
+  if (busy) return; busy = true;
+  try { S = await api.poll(); } catch (e) { busy = false; return; }
+  busy = false;
+  clockOffset = S.now * 1000 - Date.now();
+  if (wasRunning && !S.running) { revealedId = null; currentId = null; setTimeout(() => setCurrent(null), 0); }
+  wasRunning = S.running;
+  syncFeed(); syncBoss(); updateReveal(); syncZombie(); syncPrep(); syncLessons();
+  if (S.running && S.streak !== streak) setStreak(S.streak);
+  $("btnStart").disabled = S.running; $("btnStop").disabled = !S.running;
+  $("mini").innerHTML = S.members.map(m => `<span class="st ${m.online ? "on" : ""}" title="${esc(m.name)} (${esc(m.topic)}) — ${m.online ? "online" : "offline"}">
+    <span class="emo">${esc(m.emoji)}</span></span>`).join("");
+  const t = S.thinking;
+  $("thinking").innerHTML = !S.running || !t.length ? "" : `<span class="dots"><span></span><span></span><span></span></span>
+    ${t.map(x => `<span class="emo">${esc(x.emoji)}</span> <b>${esc(x.name)}</b>`).join(" and ")} ${t.length > 1 ? "are" : "is"} thinking of a question…`;
+}
+
+function tickClass() {
+  const el = $("classTime");
+  if (!S) return;
+  let left = S.class_seconds;
+  if (S.running && S.started_at) left = Math.max(0, S.class_seconds - ((Date.now() + clockOffset) / 1000 - S.started_at));
+  const m = Math.floor(left / 60), s = Math.floor(left % 60);
+  el.textContent = `${m}:${String(s).padStart(2, "0")}`;
+  el.classList.toggle("low", S.running && left <= 60);
+  if (S.running && left <= 0 && !tickClass.stopping) { tickClass.stopping = true; stop(true).finally(() => tickClass.stopping = false); }
+}
+
+/* ---------- input ---------- */
+function grow() { const i = $("input"); i.style.height = "52px"; i.style.height = Math.min(i.scrollHeight, 140) + "px"; }
+function wrapSel(mark) {
+  const i = $("input"), a = i.selectionStart, b = i.selectionEnd, v = i.value;
+  i.value = v.slice(0, a) + mark + v.slice(a, b) + mark + v.slice(b); i.selectionStart = a + mark.length; i.selectionEnd = b + mark.length;
+}
+$("input").addEventListener("input", grow);
+let leanT = null;                                      // the student leans in while the Teacher types
+$("input").addEventListener("input", () => {
+  const av = cards.get(currentId) && cards.get(currentId).querySelector(".av");
+  if (!av) return;
+  av.classList.add("lean");
+  clearTimeout(leanT); leanT = setTimeout(() => av.classList.remove("lean"), 900);
+});
+$("input").addEventListener("keydown", e => {
+  if (e.ctrlKey && !e.shiftKey && !e.altKey) { const m = { b: "**", i: "*", u: "__" }[e.key.toLowerCase()]; if (m) { e.preventDefault(); wrapSel(m); return; } }
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+});
+$("choices").addEventListener("click", e => { const b = e.target.closest("button[data-i]"); if (b && !b.disabled) send(+b.dataset.i); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $("selModal").classList.contains("open")) { $("selNo").onclick(); return; }
+  if (e.key === "Escape" && $("delModal").classList.contains("open")) { $("delNo").onclick(); return; }
+  if (document.querySelector(".modal.open")) return;
+  if (LV.open) { if (e.key === "Escape" && document.activeElement.tagName !== "INPUT") openLessons(false); return; }
+  if (e.key === "Enter" && revealedId && document.activeElement !== $("input")) { e.preventDefault(); ok(); return; }
+  if ($("choices").classList.contains("show") && !revealedId) {
+    const n = $("choices").querySelectorAll("button").length;
+    const i = { "1": 0, "2": 1, "3": 2, a: 0, b: 1, c: 2 }[e.key.toLowerCase()];
+    if (i !== undefined && i < n) { e.preventDefault(); send(i); }
+  }
+});
+$("send").onclick = () => send();
+$("ok").onclick = ok;
+$("more").onclick = explainMore;
+$("star").onclick = () => {
+  if (!revealedId) return;
+  const on = !starred.has(revealedId); on ? starred.add(revealedId) : starred.delete(revealedId);
+  const s = $("star"); s.classList.remove("on"); void s.offsetWidth; s.classList.toggle("on", on); s.textContent = on ? "★" : "☆";
+  if (on) toast("⭐ Starred (saving for review comes later)");
+};
+$("btnStart").onclick = start;
+$("btnStop").onclick = () => stop(false);
+$("endOk").onclick = () => $("endModal").classList.remove("open");
+$("btnFolder").onclick = () => api.open_folder();
+
+/* ---------- skills editor ---------- */
+async function loadSkill() { $("skillText").value = await api.get_skill($("skillSel").value); }
+$("btnSkills").onclick = async () => {
+  $("skillSel").innerHTML = (await api.skills()).map(n => `<option>${n}</option>`).join("");
+  await loadSkill(); $("skillModal").classList.add("open");
+};
+$("skillSel").onchange = loadSkill;
+$("skillClose").onclick = () => $("skillModal").classList.remove("open");
+$("skillSave").onclick = async () => { await api.save_skill($("skillSel").value, $("skillText").value); $("skillModal").classList.remove("open"); toast("Skill saved"); };
+$("skillDefault").onclick = async () => { $("skillText").value = await api.default_skill($("skillSel").value); };
+
+/* ---------- ☰ sidebar + 📚 lessons ---------- */
+const LV = { open: false, list: [], rev: -1, view: null, notesRev: -1, notesKey: "", seen: new Set(), seenNotes: new Set(),
+             pendingSel: null, watching: false, autoAsk: null, loading: false };
+const DZ_TEXT = "Drop a PDF, notes or a picture here";
+
+function setSide(open) {
+  $("side").classList.toggle("open", open);
+  try { localStorage.setItem("sideOpen", open ? "1" : "0"); } catch (e) {}
+}
+function openLessons(on) {
+  const v = $("lessonsView");
+  LV.open = on;
+  $("tabLessons").classList.toggle("on", on);
+  if (on) { v.classList.remove("closing"); v.classList.add("open"); loadLessons(); }
+  else if (v.classList.contains("open")) {
+    v.classList.remove("open"); v.classList.add("closing");
+    setTimeout(() => v.classList.remove("closing"), 230);
+  }
+}
+async function loadLessons() {
+  if (!api || LV.loading) return;
+  LV.loading = true;
+  try { const r = await api.lessons(); LV.rev = r.rev; LV.list = r.lessons; } finally { LV.loading = false; }
+  renderLessons();
+  if (!LV.view || !LV.list.find(l => l.id === LV.view)) {
+    const a = LV.list.find(l => l.active) || LV.list[0];
+    if (a) viewLesson(a.id); else { LV.view = null; renderNotes(null); }
+  }
+  if (LV.autoAsk) {                                  // a file just finished opening: ask to use it
+    const l = LV.list.find(x => x.id === LV.autoAsk);
+    if (l && l.status === "ready") { LV.autoAsk = null; viewLesson(l.id); askSelect(l); }
+    else if (l && l.status === "error") { LV.autoAsk = null; toast("⚠️ " + (l.error || "Couldn't read that file.")); }
+  }
+}
+function renderLessons() {
+  const act = LV.list.find(l => l.active);
+  $("lvNow").innerHTML = act ? `🎓 In class: <b>${esc(act.title)}</b>` : "No lesson picked yet";
+  $("lessonCount").textContent = LV.list.length;
+  if (!LV.list.length) {
+    $("lessonList").innerHTML = `<div class="muted" style="padding:6px 4px">No lessons yet. Upload a file or paste some text above. ⬆️</div>`;
+    return;
+  }
+  $("lessonList").innerHTML = LV.list.map(l => {
+    const sub = l.status === "importing" ? "📖 Opening the file…"
+      : l.status === "error" ? "⚠️ " + esc(l.error || "Couldn't read it")
+      : `${esc(l.kind_label || "")} · ${Number(l.words || 0).toLocaleString()} words`;
+    const badge = l.active ? `<span class="li-badge">🎓 In class</span>` : l.studied ? `<span class="li-badge">✅ Read</span>` : "";
+    return `<div class="lesson ${l.status}${l.active ? " active" : ""}${l.id === LV.view ? " view" : ""}${LV.seen.has(l.id) ? "" : " new"}"
+      data-id="${esc(l.id)}" style="--lc:${esc(l.color || "#d9b37e")}" title="${esc(l.source_name || "")}">
+      <div class="li-t">${esc(l.title)}</div><div class="li-s">${sub}</div>${badge}
+      <span class="li-acts"><button data-act="ren" title="Rename">✏️</button><button data-act="del" title="Delete">🗑</button></span></div>`;
+  }).join("");
+  LV.list.forEach(l => LV.seen.add(l.id));
+}
+function viewLesson(id) {
+  if (LV.view !== id) { LV.notesKey = ""; $("notesBody").scrollTop = 0; }
+  LV.view = id;
+  document.querySelectorAll(".lesson").forEach(e => e.classList.toggle("view", e.dataset.id === id));
+  loadNotes();
+}
+async function loadNotes() {
+  if (!LV.view || !api) return;
+  const r = await api.lesson_notes(LV.view);
+  if (r && r.id === LV.view) renderNotes(r.ok ? r : null);
+}
+function mdToHtml(md) {
+  const out = []; let depth = 0;
+  const close = (d = 0) => { while (depth > d) { out.push("</ul>"); depth--; } };
+  for (const raw of String(md || "").split("\n")) {
+    const line = raw.replace(/\s+$/, "");
+    let m;
+    if (!line.trim()) { close(); continue; }
+    if ((m = line.match(/^#{1,2}\s+(.*)/))) { close(); out.push(`<h3>${style(m[1])}</h3>`); }
+    else if ((m = line.match(/^#{3,6}\s+(.*)/))) { close(); out.push(`<h4>${style(m[1])}</h4>`); }
+    else if ((m = line.match(/^(\s*)(?:[-*•]|\d+[.)])\s+(.*)/))) {
+      const d = m[1].length >= 2 ? 2 : 1;
+      while (depth < d) { out.push("<ul>"); depth++; }
+      close(d);
+      out.push(`<li>${style(m[2])}</li>`);
+    }
+    else if (/^💡/.test(line.trim())) { close(); out.push(`<div class="remember">${style(line.trim())}</div>`); }
+    else { close(); out.push(`<p>${style(line.trim())}</p>`); }
+  }
+  close();
+  return out.join("");
+}
+function renderNotes(r) {
+  if (!r) {
+    $("notesHead").innerHTML = "";
+    $("notesBody").innerHTML = `<div class="n-empty"><div><div class="big emo">📝</div>Upload a lesson and its simple notes show up here.</div></div>`;
+    return;
+  }
+  const key = JSON.stringify([r.id, r.studied, r.writing, r.parts.map(p => [p.title, p.md])]);
+  if (key === LV.notesKey) return;                  // nothing new: don't redraw (keeps the scroll position)
+  LV.notesKey = key;
+  const w = r.writing && S ? S.members.find(m => m.id === r.writing) : null;
+  $("notesHead").innerHTML = `<h3>📝 ${esc(r.title)}</h3><span class="grow"></span>` +
+    (w ? `<span class="chip" style="--tc:${COLORS[w.id]}">✍️ ${esc(w.name)} is writing notes…</span>` : "");
+  if (!r.studied) {
+    $("notesBody").innerHTML = `<div class="n-empty"><div><div class="big emo">📖</div>
+      Select this lesson for class. The students will read it,<br>then write simple notes here while you answer questions.</div></div>`;
+    return;
+  }
+  const top = $("notesBody").scrollTop;
+  $("notesBody").innerHTML = r.parts.map(p => {
+    const k = r.id + ":" + p.sid + ":" + (p.md ? 1 : 0), fresh = !LV.seenNotes.has(k);
+    LV.seenNotes.add(k);
+    return `<div class="npart${fresh ? " new" : ""}" style="--pc:${COLORS[p.sid]}">
+      <div class="by"><span class="emo">${esc(p.emoji)}</span> ${esc(p.name)}'s notes · part ${esc(p.part)}</div>
+      ${p.md ? mdToHtml(p.md) : `<h3>${esc(p.title)}</h3><p class="wait">${r.writing === p.sid ? "✍️ Writing these notes right now…"
+        : `⏳ ${esc(p.name)} will write these notes during class…`}</p>`}</div>`;
+  }).join("");
+  $("notesBody").scrollTop = top;
+}
+
+function askSelect(l) {
+  LV.pendingSel = l.id;
+  $("selTitle").textContent = `Use “${l.title}” for class?`;
+  $("selSub").innerHTML = (S && S.running ? "⚠️ This ends the class that's running now.<br>" : "") +
+    "Byte, Pixel, Mochi, Ribbit and Whiskers will read it, then ask questions <b>only</b> about it.";
+  $("selModal").classList.add("open");
+  $("selYes").focus();
+}
+async function selectLesson() {
+  const id = LV.pendingSel;
+  $("selModal").classList.remove("open");
+  if (!id) return;
+  const r = await api.select_lesson(id);
+  if (!r.ok) { toast(r.error); return; }
+  clearClassUI();
+  LV.watching = true;
+  await refresh();
+  loadLessons();
+}
+
+/* the loading screen: the 5 students read the lesson with flipping books */
+function showPrep(P) {
+  const ms = (S.members || []).filter(m => P.students[m.id] !== undefined);
+  $("readers").innerHTML = ms.map((m, i) => `<div class="reader" data-sid="${m.id}" style="--rc:${COLORS[m.id]}">
+      <div class="rav" style="background:${COLORS[m.id]};animation-delay:${(i * .19).toFixed(2)}s">${avatar(m.id, m.emoji)}<span class="ok emo">✅</span></div>
+      <div class="book emo" style="animation-delay:${(i * .13).toFixed(2)}s">📖</div>
+      <div class="rn">${esc(m.name)}</div><div class="rbar"><i></i></div></div>`).join("");
+  $("readers").style.gridTemplateColumns = `repeat(${Math.max(1, ms.length)}, 1fr)`;
+  document.querySelector("#prepModal .prep").classList.remove("finished");
+  $("prepFill").style.width = "0%";
+  $("prepModal").classList.add("open");
+  tone([[523, 0, .3], [659, .12, .3], [784, .24, .5]], .09);
+}
+function syncPrep() {
+  const P = S && S.prepare;
+  const busy = P && P.stage !== "done" && P.stage !== "error";
+  if (busy && !$("prepModal").classList.contains("open")) { LV.watching = true; showPrep(P); }
+  if (!LV.watching || !P) return;
+  $("prepTitle").textContent = P.title || "";
+  $("prepMsg").textContent = P.msg || "";
+  // bars creep forward smoothly while a student reads (the real value jumps when a piece is finished)
+  const nowS = (Date.now() + clockOffset) / 1000;
+  const creep = (t0, tau) => 1 - Math.exp(-Math.max(0, nowS - (t0 || nowS)) / tau);
+  let sum = 0, n = 0;
+  for (const [sid, v] of Object.entries(P.students || {})) {
+    const shown = v >= 1 ? 1 : Math.max(v, 0.9 * creep(P.started, 7));
+    sum += shown; n++;
+    const r = document.querySelector(`.reader[data-sid="${sid}"]`);
+    if (!r) continue;
+    r.querySelector(".rbar i").style.width = (shown * 100).toFixed(1) + "%";
+    if (v >= 1 && !r.classList.contains("done")) { r.classList.add("done"); tone([[880, 0, .15], [1175, .08, .3]], .07); }
+    const writing = P.stage === "cards" && (P.writing || []).includes(+sid);
+    if (r.classList.contains("writing") !== writing) {
+      r.classList.toggle("writing", writing);
+      r.querySelector(".book").textContent = writing ? "✍️" : "📖";
+    }
+  }
+  let pct = (sum / Math.max(1, n)) * 80;
+  if (P.stage === "cards") pct = 80 + 19 * creep(P.cards_started, 6);
+  if (P.stage === "done") pct = 100;
+  $("prepFill").style.width = pct.toFixed(1) + "%";
+  $("prepPct").textContent = Math.floor(pct) + "%";
+  if (busy) return;
+  LV.watching = false;
+  if (P.stage === "done") {
+    document.querySelector("#prepModal .prep").classList.add("finished");
+    $("prepMsg").textContent = "Everyone's ready! Starting class…";
+    tone([[523, 0, .25], [659, .1, .25], [784, .2, .25], [1047, .3, .8]], .12);
+    setTimeout(async () => {
+      $("prepModal").classList.remove("open");
+      openLessons(false);
+      loadLessons();
+      await start();
+    }, 1300);
+  } else {
+    setTimeout(() => $("prepModal").classList.remove("open"), 2600);
+    toast("⚠️ " + (P.msg || "Couldn't get the lesson ready."));
+  }
+}
+function syncLessons() {
+  if (!LV.open || !S) return;
+  if (S.lessons_rev !== LV.rev) loadLessons();
+  if (S.notes_rev !== LV.notesRev) { LV.notesRev = S.notes_rev; loadNotes(); }
+}
+
+async function uploadFile(f) {
+  if (f.size > 60e6) { toast("That file is too big (60 MB max)."); return; }
+  $("drop").classList.add("busy"); $("dzT").textContent = `Opening ${f.name}…`;
+  try {
+    const data = await new Promise((ok, bad) => { const rd = new FileReader(); rd.onload = () => ok(rd.result); rd.onerror = bad; rd.readAsDataURL(f); });
+    const r = await api.import_file(f.name, data);
+    if (!r.ok) { toast(r.error); return; }
+    toast(`📄 Got it! Reading ${f.name}…`);
+    LV.autoAsk = r.id; LV.view = r.id;
+    await loadLessons(); viewLesson(r.id);
+  } catch (e) { toast("Couldn't open that file."); }
+  finally { $("drop").classList.remove("busy"); $("dzT").textContent = DZ_TEXT; }
+}
+$("sbToggle").onclick = () => setSide(!$("side").classList.contains("open"));
+$("tabLessons").onclick = () => openLessons(!LV.open);
+$("lvClose").onclick = () => openLessons(false);
+$("drop").onclick = e => { if (e.target !== $("file")) $("file").click(); };
+$("file").onchange = () => { const f = $("file").files[0]; $("file").value = ""; if (f) uploadFile(f); };
+["dragenter", "dragover"].forEach(ev => $("drop").addEventListener(ev, e => { e.preventDefault(); $("drop").classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => $("drop").addEventListener(ev, e => { e.preventDefault(); $("drop").classList.remove("over"); }));
+$("drop").addEventListener("drop", e => { const f = e.dataTransfer.files[0]; if (f) uploadFile(f); });
+window.addEventListener("dragover", e => e.preventDefault());   // a file dropped anywhere else doesn't open in the window
+window.addEventListener("drop", e => e.preventDefault());
+$("pasteText").oninput = () => {
+  const n = $("pasteText").value.trim().split(/\s+/).filter(Boolean).length;
+  $("pasteCount").textContent = n.toLocaleString() + " words";
+  $("pasteGo").disabled = n < 15;
+};
+$("pasteGo").onclick = async () => {
+  $("pasteGo").disabled = true;
+  const r = await api.import_text($("pasteText").value, null);
+  if (!r.ok) { toast(r.error); $("pasteText").oninput(); return; }
+  $("pasteText").value = ""; $("pasteText").oninput();
+  toast("✍️ Lesson made!");
+  LV.autoAsk = r.id; LV.view = r.id;
+  await loadLessons(); viewLesson(r.id);
+};
+$("lessonList").onclick = e => {
+  const el = e.target.closest(".lesson");
+  if (!el || el.querySelector("input")) return;
+  const l = LV.list.find(x => x.id === el.dataset.id);
+  if (!l) return;
+  const act = e.target.closest("button[data-act]");
+  if (act && act.dataset.act === "ren") {
+    const t = el.querySelector(".li-t");
+    t.innerHTML = `<input value="${esc(l.title)}" maxlength="60">`;
+    const inp = t.querySelector("input"); inp.focus(); inp.select();
+    const done = async save => {
+      if (!inp.isConnected) return;
+      if (save && inp.value.trim() && inp.value.trim() !== l.title) {
+        const r = await api.rename_lesson(l.id, inp.value.trim()); if (!r.ok) toast(r.error);
+      }
+      await loadLessons(); LV.notesKey = ""; loadNotes();
+    };
+    inp.onkeydown = ev => { if (ev.key === "Enter") done(true); if (ev.key === "Escape") { ev.stopPropagation(); done(false); } };
+    inp.onblur = () => done(true);
+    return;
+  }
+  if (act && act.dataset.act === "del") { askDelete(l, el); return; }
+  viewLesson(l.id);
+  if (l.status === "ready" && !l.active) askSelect(l);
+  else if (l.status === "importing") toast("📖 Still opening that file…");
+  else if (l.status === "error") toast("⚠️ " + (l.error || "Couldn't read that file."));
+};
+function askDelete(l, el) {
+  LV.pendingDel = l.id;
+  $("delTitle").textContent = `Delete “${l.title}”?`;
+  $("delSub").innerHTML = (l.active ? "This is the lesson your class uses right now.<br>" : "") +
+    "It goes to the trash folder (<b>lessons\\.trash</b>), so it can be brought back later.";
+  $("delCard").style.setProperty("--lc", l.color || "#d9b37e");
+  $("delName").textContent = l.title;
+  $("delModal").classList.add("open");
+  $("delNo").focus();
+}
+$("delNo").onclick = () => { $("delModal").classList.remove("open"); LV.pendingDel = null; };
+$("delYes").onclick = async () => {
+  const id = LV.pendingDel; LV.pendingDel = null;
+  const card = document.querySelector(`.lesson[data-id="${CSS.escape(id || "")}"]`);
+  $("delModal").classList.remove("open");
+  if (!id) return;
+  const r = await api.delete_lesson(id);
+  if (!r.ok) { toast(r.error); return; }
+  if (card) { card.classList.add("bye"); await new Promise(ok => setTimeout(ok, 420)); }
+  tone([[523, 0, .15], [392, .1, .3]], .07);
+  toast("🗑 Lesson moved to the trash");
+  if (LV.view === id) LV.view = null;
+  loadLessons();
+};
+$("delModal").addEventListener("click", e => { if (e.target === $("delModal")) $("delNo").onclick(); });
+$("selModal").addEventListener("click", e => { if (e.target === $("selModal")) $("selNo").onclick(); });
+$("selNo").onclick = () => { $("selModal").classList.remove("open"); LV.pendingSel = null; };
+$("selYes").onclick = selectLesson;
+try { setSide(localStorage.getItem("sideOpen") === "1"); } catch (e) {}
+
+window.addEventListener("pywebviewready", async () => {
+  api = window.pywebview.api;
+  try { api.ready(); } catch (e) {}                    // tells the app the page loaded (no black screen)
+  try { PICS = await api.avatars() || {}; } catch (e) {}
+  showIdle();
+  await refresh();
+  setInterval(refresh, 500);
+  setInterval(() => { tickRing(); tickClass(); moveZombie(); }, 100);
+});
+</script>
+</body>
+</html>

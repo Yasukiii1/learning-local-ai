@@ -1,0 +1,41 @@
+Local AI Models
+
+What Is a Local AI Model?
+
+A large language model, or LLM, is a computer program that has learned to read and write text. It can answer questions, explain ideas, write stories and help with homework. Famous examples run in big data centres owned by companies, and you use them over the internet. A local LLM is different: it runs on your own computer, at home, without needing the internet. Everything happens inside your own machine, so your questions never leave your room.
+
+How an LLM Learns
+
+An LLM learns by reading a huge amount of text, like books, websites and articles. This learning stage is called training. During training, the model plays a guessing game billions of times: it looks at some words and tries to guess the next word. Every time it guesses wrong, it changes itself a tiny bit so the next guess is better. After training, everything the model learned is stored in numbers called parameters, or weights. A small model might have 1 billion parameters, while a big model can have more than 100 billion. Training a big model takes months and thousands of powerful computers, so most people never train one themselves. Instead, they download a model that is already trained.
+
+Tokens: How the Model Reads
+
+An LLM does not read whole words the way people do. It breaks text into small pieces called tokens. A token can be a whole short word, like "cat", or part of a longer word, like "un" and "believable". On average, one token is about three quarters of an English word. When a model writes an answer, it creates one token at a time, very quickly. The speed of a model is measured in tokens per second. A speed of 70 tokens per second means the model writes about 50 words every second, which is much faster than anyone can read.
+
+The Context Window
+
+A model can only pay attention to a limited amount of text at once. This limit is called the context window, and it is measured in tokens. If a model has a context window of 8,000 tokens, it can look at about 6,000 words at the same time. Everything in the conversation, including your question and the model's own answer, has to fit inside the context window. When a conversation gets too long, the oldest parts fall out of the window, and the model forgets them.
+
+The Hardware: GPU, VRAM and CPU
+
+To run a local LLM, a computer needs enough memory to hold the model's parameters. The fastest place to run a model is the graphics card, also called the GPU. A GPU has thousands of small cores that can do many maths problems at the same time, which is exactly what an LLM needs. The GPU has its own fast memory called VRAM. For example, a graphics card with 12 gigabytes of VRAM can hold a small or medium model. If a model is too big for the VRAM, some of its layers can be moved to the CPU and the normal system memory, called RAM. This is called offloading. Offloading lets bigger models run, but they become slower, because the CPU is much slower at this kind of work than the GPU. Running a model on the GPU for a long time also makes the graphics card hot, so good cooling is important.
+
+Quantization: Making Models Smaller
+
+The parameters of a model are normally stored as very precise numbers, which take up a lot of memory. Quantization is a trick that stores each number with less detail, so the whole model becomes much smaller. A model stored with 4 bits per number is about four times smaller than one stored with 16 bits. Quantized models fit into less VRAM and usually run faster. The downside is that the model can become a little less accurate, a bit like a photo that is saved at lower quality. Many local models are shared in a file format called GGUF, and the file name often shows the quantization level, such as Q4 or Q6. A higher number means more detail and a bigger file.
+
+Programs for Running Local Models
+
+People use special programs to run local models. One popular program is llama.cpp, which is free and open source. It can run a model as a small server on your computer. Each server listens on a number called a port, such as port 1001, and other programs can send it questions through that port. Other apps, like LM Studio, give you buttons and menus so you don't need to type commands. Most of these programs let you change settings such as the temperature. The temperature controls how creative the model is. A low temperature, like 0.1, makes the model careful and predictable, while a high temperature makes its answers more random and surprising.
+
+Thinking Models
+
+Some newer models can think before they answer. In thinking mode, the model first writes its reasoning step by step, and then gives the final answer. Thinking often makes answers more correct, especially for maths and tricky questions. However, thinking uses extra tokens, so the answer takes longer to arrive. Some programs let you set a thinking budget, which is the largest number of tokens the model may use for thinking.
+
+Why People Use Local Models
+
+Local models have several big advantages. The first is privacy: your messages stay on your own computer and are not sent to a company. The second is that they work offline, even when the internet is down. The third is cost: after you have the computer, running the model is free, with no monthly fee. People can also choose exactly which model to use and change its settings however they like. Some people even run several small models at the same time and let them talk to each other.
+
+The Limits of Local Models
+
+Local models also have limits. Small models know less than huge ones and make more mistakes. Sometimes a model says something that sounds confident but is completely wrong. This is called a hallucination, so it is always smart to check important facts. A local model also only knows what it learned during training, so it does not know about news that happened afterwards, unless you give it that information yourself. Finally, running big models needs an expensive graphics card with lots of VRAM, and it uses a lot of electricity.

@@ -1,0 +1,20 @@
+# the exe is published on the Releases page, not in the repo
+*.exe
+*.zip
+# models are downloaded by download_model.bat
+*.gguf
+*.part
+# made by the app at runtime
+config.json
+lessons/
+sessions/
+skills/
+logs/
+banks/
+avatars/
+# python / build
+__pycache__/
+.venv/
+build/
+dist/
+*.spec
