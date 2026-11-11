@@ -103,6 +103,12 @@ Then open **`AI-Classroom.exe`**. The 5 little student icons at the bottom-left 
 Double-click **`stop_students.bat`**. It stops only the servers on ports 1001–1005 and leaves any other llama.cpp
 servers alone. Do this when you're finished, to free up your graphics card.
 
+Or paste this into PowerShell (it does the same thing):
+
+```powershell
+1001..1005 | % { Get-NetTCPConnection -LocalPort $_ -State Listen -ErrorAction SilentlyContinue | % { Stop-Process -Id $_.OwningProcess -Force } }
+```
+
 ---
 
 ## 🧰 Problems?
@@ -128,6 +134,8 @@ llama-server -m models\LFM3-1.7B-Q4_K_M.gguf -c 12000 --parallel 2 -ngl 99 -fa o
   --jinja --temp 0.1 --top-k 50 --top-p 1.0 --min-p 0 --repeat-penalty 1.1 ^
   --alias student1 --port 1001
 ```
+
+To start all 5 from PowerShell instead, see **Run the student models yourself** in the [README](README.md).
 
 - `--parallel 2` gives each student 2 slots: one to talk to you, and one to plan questions in the background.
 - `--temp 0.1` keeps the students careful and factual.

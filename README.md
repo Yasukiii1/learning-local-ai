@@ -59,6 +59,61 @@ When you're done, double-click **`stop_students.bat`** to free up your graphics 
 
 ---
 
+## 🧑‍🎓 Run the student models yourself (you already have llama.cpp)
+
+The `.bat` files above do all of this for you. If you'd rather run the models yourself, here is everything they do.
+The 5 students are **5 copies of one small model** ([LFM3-1.7B](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF)),
+each in its own `llama-server` on ports **1001–1005**. The app talks to them there.
+
+**1. Check llama.cpp.** You need build **12196 or newer** (older builds don't know LFM3):
+
+```powershell
+llama-server --version
+```
+
+**2. Get the model.** Download **one** file from [LiquidAI/LFM3-1.7B-GGUF](https://huggingface.co/LiquidAI/LFM3-1.7B-GGUF/tree/main)
+into the `models` folder: `LFM3-1.7B-Q4_K_M.gguf` for 8 GB VRAM, or `LFM3-1.7B-Q6_K.gguf` for 12 GB or more.
+All 5 students share this one file.
+
+**3. Start the 5 students.** Open **PowerShell** in the `Learning-Local-AI` folder and paste this. Change the two
+paths at the top if yours are different:
+
+```powershell
+$server = "llama-server"                         # or the full path, e.g. "C:\llama.cpp\llama-server.exe"
+$model  = (Resolve-Path ".\models\LFM3-1.7B-Q4_K_M.gguf").Path   # the model you downloaded
+1..5 | ForEach-Object {
+  Start-Process $server -ArgumentList "-m `"$model`" -c 12000 --parallel 2 -ngl 99 -fa on --cache-type-k q8_0 --cache-type-v q8_0 --threads 3 --jinja --temp 0.1 --top-k 50 --top-p 1.0 --min-p 0 --repeat-penalty 1.1 --alias student$_ --port 100$_"
+  Start-Sleep 3
+}
+```
+
+| Option | Why |
+|---|---|
+| `-c 12000` | each student's memory. Use `20000` with 12 GB VRAM or more. |
+| `--parallel 2` | 2 slots per student: one answers you, the other writes the next questions and notes in the background. **Keep it.** |
+| `-ngl 99` | the whole model on the graphics card. If students crash with `out of memory`, try `22`, then `18`. |
+| `--temp 0.1` | keeps the students careful and factual. |
+| `--port 1001`…`1005` | the app expects these ports (Byte, Pixel, Mochi, Ribbit, Whiskers). |
+
+**4. Check they're ready.** All 5 should say `ok`:
+
+```powershell
+foreach ($p in 1001..1005) { try { "port $p : " + (Invoke-RestMethod "http://127.0.0.1:$p/health").status } catch { "port $p : not ready" } }
+```
+
+Then open `AI-Classroom.exe`.
+
+**5. Stop them** when you're done. This only closes the servers on ports 1001–1005; any other llama.cpp server keeps
+running:
+
+```powershell
+1001..1005 | % { Get-NetTCPConnection -LocalPort $_ -State Listen -ErrorAction SilentlyContinue | % { Stop-Process -Id $_.OwningProcess -Force } }
+```
+
+More detail and fixes for common problems: **[SETUP_STUDENTS.md](SETUP_STUDENTS.md)**.
+
+---
+
 ## ✨ New in v1.1
 
 - **Class lobby:** before class, the Class tab shows a chalkboard with the lesson and a **Start class** button, so you can read first.
