@@ -7,9 +7,9 @@ Everything runs **on your own computer** with [llama.cpp](https://github.com/ggm
 
 ### 🎬 See it in action
 
-[![Watch the 55-second demo in 4K](docs/demo-poster.jpg)](https://github.com/Yasukiii1/learning-local-ai/releases/download/v1.1/AI-Classroom-demo-4K.mp4)
+[![Watch the 55-second demo on YouTube](docs/demo-poster.jpg)](https://www.youtube.com/watch?v=JJG4vCcJN0M)
 
-▶️ **[Watch the 55-second demo (4K, 66 MB)](https://github.com/Yasukiii1/learning-local-ai/releases/download/v1.1/AI-Classroom-demo-4K.mp4)**: the real app with the 5 AI students, recorded live.
+▶️ **[Watch the 55-second demo on YouTube](https://www.youtube.com/watch?v=JJG4vCcJN0M)**: the real app with the 5 AI students, recorded live.
 
 | The students | |
 |---|---|
