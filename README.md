@@ -4,13 +4,6 @@ A classroom game where **you are the Teacher** and **5 small AI students** quiz 
 a PDF, your notes, a picture of a page, or some pasted text.
 
 Everything runs **on your own computer** with [llama.cpp](https://github.com/ggml-org/llama.cpp). No internet and no account needed after setup.
-
-### 🎬 See it in action
-
-[![Watch the 55-second demo on YouTube](docs/demo-poster.jpg)](https://www.youtube.com/watch?v=JJG4vCcJN0M)
-
-▶️ **[Watch the 55-second demo on YouTube](https://www.youtube.com/watch?v=JJG4vCcJN0M)**: the real app with the 5 AI students, recorded live.
-
 | The students | |
 |---|---|
 | 🤖 **Byte** | nerdy and precise, loves numbers and exact facts |
