@@ -5,6 +5,12 @@ a PDF, your notes, a picture of a page, or some pasted text.
 
 Everything runs **on your own computer** with [llama.cpp](https://github.com/ggml-org/llama.cpp). No internet and no account needed after setup.
 
+### 🎬 See it in action
+
+[![Watch the 55-second demo in 4K](docs/demo-poster.jpg)](https://github.com/Yasukiii1/learning-local-ai/releases/download/v1.1/AI-Classroom-demo-4K.mp4)
+
+▶️ **[Watch the 55-second demo (4K, 66 MB)](https://github.com/Yasukiii1/learning-local-ai/releases/download/v1.1/AI-Classroom-demo-4K.mp4)**: the real app with the 5 AI students, recorded live.
+
 | The students | |
 |---|---|
 | 🤖 **Byte** | nerdy and precise, loves numbers and exact facts |
