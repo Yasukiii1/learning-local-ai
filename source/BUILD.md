@@ -8,11 +8,13 @@ You only need this if you want to change the app. To just play, download the rea
 | File | What it does |
 |---|---|
 | `app.py` | opens the window (pywebview) and connects the page to the Python code |
-| `quiz.py` | the class: question cards, judging, explanations, special cards, zombies, lessons |
+| `quiz.py` | the class: question cards, judging, explanations, special cards, zombies, lessons, class notes, sticky notes |
 | `engine.py` | settings (`config.json`), the students' skill files, and the calls to the llama.cpp servers |
 | `lessons.py` | the lesson library: reads PDF / Word / text / pictures and splits them into 5 parts |
+| `review.py` | the 📝 Review tab: missed, timed-out and starred questions to practise again |
+| `stats.py` | the 🏠 Home dashboard numbers (classes, accuracy, streaks) |
 | `ui/index.html` | the whole interface (one HTML file) |
-| `skills_default/*.md` | the default instructions for the students (copied to `skills/` on first start) |
+| `skills_default/*.md` | the default instructions for the students (copied to `skills/` on first start; when a new version changes them, the old copies move to `skills/old/`) |
 | `tools/ocr.ps1` | reads text from pictures and scanned PDFs with Windows' built-in OCR |
 
 ## Build

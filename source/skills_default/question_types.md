@@ -43,15 +43,24 @@ A multiple choice question with exactly 3 options and exactly ONE correct option
 - All 3 options are the same kind of thing (3 names, 3 numbers, 3 places, 3 actions...), so they look alike
   and the Teacher has to really know the answer. The 2 wrong options are close but clearly wrong if you
   know the lesson (for example a related term from the notes, or a number that is near but not right).
-- The correct option must come from your notes.
-- The answer is 1 short sentence saying why the correct option is right.
-Reply with exactly these lines:
+- The RIGHT option is the answer the fact gives to the question, in its words.
+- Each WRONG option must be clearly FALSE as an answer to this question: never the right option said another way
+  ("force × distance" and "distance × force" are the SAME answer), and never something else that is also true about
+  the word asked. A different lesson word that answers a DIFFERENT question is a good wrong option.
+- The answer is 1 short sentence saying why the RIGHT option is right, using the RIGHT option's words. Never mention
+  letters (A, B, C) and never the wrong options.
+Reply with exactly these lines (the app puts the options in a random order):
 QUESTION: ...
-A) ...
-B) ...
-C) ...
-CORRECT: (just the letter A, B or C)
+RIGHT: <the right answer: 1 to 6 words, not a sentence>
+WRONG: <a wrong answer: 1 to 6 words, the same kind of thing>
+WRONG: <another wrong answer: 1 to 6 words>
 ANSWER: ...
+Example (for a different lesson - do NOT copy it):
+QUESTION: What do plants make from **sunlight**?
+RIGHT: Food (sugar)
+WRONG: Water
+WRONG: Soil
+ANSWER: Plants use sunlight to make their own **food**, a sugar.
 
 ## spot_mistake
 Write ONE statement about something in your notes that sounds right but has ONE wrong fact in it
@@ -62,8 +71,13 @@ STATEMENT: ...
 ANSWER: ...
 
 ## lightning
-A QUICK and EASY question about ONE simple fact from your notes. The Teacher only has 10 seconds.
-The question is under 12 words. The answer starts with the 1 to 3 word answer in **bold**, then a few words.
+A QUICK and EASY question: the Teacher only has 10 seconds, so it must be answerable with 1 to 3 words.
+- The answer is the key word: {keyword}
+- Describe it using the fact, and ask for its name (like "What do we call ...?", "What is the name for ...?").
+  Do not write the key word in the question.
+- Never ask "why" or "how", never ask to explain, compare or list several things.
+- The question is under 12 words.
+- The answer STARTS with the 1 to 3 word answer in **bold**, then a few words, like: **Evaporation**, when water turns into vapour.
 Reply with exactly these two lines:
 QUESTION: ...
 ANSWER: ...
@@ -71,6 +85,7 @@ ANSWER: ...
 ## whos_right
 Two students disagree about a question. Write the question, one RIGHT claim and one WRONG claim.
 - Both claims are one short sentence (under 15 words) that a student would say, like "I think it's ...".
+  Never write "the teacher says" in a claim: each student just says what they think.
 - The wrong claim sounds believable: a mix-up a real student could make, using words from the lesson.
 - The question is under 20 words. The answer is 1 short sentence saying why the right claim is right.
 Reply with exactly these four lines:

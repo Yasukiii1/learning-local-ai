@@ -44,13 +44,81 @@ def _run_ocr(ocr_script, path):
     return text
 
 
+def _columns(block):
+    """Lines of a layout-mode text block -> text read column by column, or None if it isn't laid out in columns.
+    Slides often put a label above its text in side-by-side boxes; read line by line, every label lands next
+    to the wrong text ("land Number of people... Labour Consist of finance...")."""
+    rows = []
+    for line in block:
+        segs = [(m.start(), m.end(), m.group().strip()) for m in re.finditer(r"\S+(?: {1,2}\S+)*", line)]
+        rows.append(segs)
+    if sum(1 for r in rows if len(r) >= 2) < 2:
+        return None
+    cols = []                                              # merge overlapping [start, end] spans into columns
+    for s, e, _ in sorted(seg for r in rows for seg in r):
+        if cols and s <= cols[-1][1] + 1:
+            cols[-1][1] = max(cols[-1][1], e)
+        else:
+            cols.append([s, e])
+    if len(cols) < 2:
+        return None
+    out = []
+    for cs, ce in cols:
+        parts = [t for r in rows for s, e, t in r if s >= cs and e <= ce]
+        if not parts:
+            continue
+        head, rest = parts[0], " ".join(parts[1:])
+        # a label sits alone above its text: short, and the text below starts a new sentence (capital letter)
+        if rest and len(head.split()) <= 3 and not re.search(r"[.,;:!?]$", head) and rest[:1].isupper() \
+                and not re.search(r"\b(of|the|a|an|and|or|in|on|to|this|that|for|with)$", head, re.I):
+            out.append("%s: %s" % (head, rest))           # "Labour: Number of people available..."
+        else:
+            out.append(" ".join(parts))
+    return "\n\n".join(out)
+
+
+def _layout_page(page):
+    """Read a page by its layout so side-by-side columns stay together. Falls back to the plain text."""
+    try:
+        lay = page.extract_text(extraction_mode="layout") or ""
+    except Exception:                                      # noqa: BLE001
+        return None
+    blocks, cur = [], []
+    for line in lay.splitlines():
+        if line.strip():
+            cur.append(line)
+        elif cur:
+            blocks.append(cur)
+            cur = []
+    if cur:
+        blocks.append(cur)
+    found, out, k = False, [], 0
+    while k < len(blocks):
+        b = blocks[k]
+        k += 1
+        if len(b) <= 2 and k < len(blocks) and _columns(blocks[k]):    # a row of labels above the boxes
+            joined = _columns(b + blocks[k])
+            if joined and joined.count("\n\n") == _columns(blocks[k]).count("\n\n"):
+                found = True
+                out.append(joined)
+                k += 1
+                continue
+        c = _columns(b)
+        if c:
+            found = True
+            out.append(c)
+        else:
+            out.append(" ".join(l.strip() for l in b))
+    return "\n\n".join(out) if found else None
+
+
 def _pdf_text(path):
     from pypdf import PdfReader
     reader = PdfReader(path)
     pages = []
     for p in reader.pages:
         try:
-            pages.append(p.extract_text() or "")
+            pages.append(_layout_page(p) or p.extract_text() or "")
         except Exception:                                  # noqa: BLE001 - one broken page shouldn't stop the rest
             pages.append("")
     return pages

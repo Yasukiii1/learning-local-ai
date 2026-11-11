@@ -45,12 +45,60 @@ class Api:
     def explain_more(self, item_id):
         return self._q.explain_more(item_id)
 
+    # 🏠 home
+    def dashboard(self):
+        return self._q.dashboard()
+
+    # ⚙️ settings
+    def get_settings(self):
+        return self._q.get_settings()
+
+    def save_settings(self, changes):
+        return self._q.save_settings(changes)
+
+    def reset_settings(self):
+        return self._q.reset_settings()
+
+    def save_student(self, sid, name, emoji, personality, picture=None):
+        return self._q.save_student(sid, name, emoji, personality, picture)
+
+    def students_power(self, on):
+        return self._q.students_power(on)
+
+    # 📝 review
+    def star(self, item_id, on):
+        return self._q.star(item_id, on)
+
+    def review_list(self, lesson_id=None):
+        return self._q.review_list(lesson_id)
+
+    def review_update(self, lesson_id, key, changes):
+        return self._q.review_update(lesson_id, key, changes)
+
+    def review_delete(self, items):
+        return self._q.review_delete(items)
+
+    def review_explain(self, lesson_id, key):
+        return self._q.review_explain(lesson_id, key)
+
+    def pause(self, on):
+        return self._q.pause(on)
+
     # 📚 lessons
     def lessons(self):
         return self._q.lessons()
 
     def lesson_notes(self, lesson_id):
         return self._q.lesson_notes(lesson_id)
+
+    def more_notes(self, lesson_id=None):
+        return self._q.more_notes(lesson_id)
+
+    def more_stickies(self, lesson_id=None):
+        return self._q.more_stickies(lesson_id)
+
+    def delete_note(self, lesson_id, key):
+        return self._q.delete_note(lesson_id, key)
 
     def import_file(self, name, data):
         return self._q.import_file(name, data)

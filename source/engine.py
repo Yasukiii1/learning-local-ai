@@ -31,11 +31,11 @@ CONFIG_PATH = os.path.join(APP_DIR, "config.json")
 SKILLS_DIR = os.path.join(APP_DIR, "skills")
 DEFAULT_SKILLS_DIR = os.path.join(RES_DIR, "skills_default")
 
-CONFIG_VERSION = 14
-SKILLS_VERSION = 14
+CONFIG_VERSION = 15
+SKILLS_VERSION = 28
 # settings whose default changed: older config files get the new value once
 CONFIG_UPGRADES = {2: ["message_gap_seconds"], 3: ["thinking_budget_plan"], 4: ["students"], 5: [],
-                   6: ["question_type_weights"], 7: ["challenge_every", "second_chance_every"], 8: ["zombie_seconds"], 9: [], 10: ["max_tokens_study"], 11: ["thinking_budget_study"], 12: ["thinking_budget_plan", "max_tokens_plan"], 13: [], 14: ["thinking_budget_notes"]}
+                   6: ["question_type_weights"], 7: ["challenge_every", "second_chance_every"], 8: ["zombie_seconds"], 9: [], 10: ["max_tokens_study"], 11: ["thinking_budget_study"], 12: ["thinking_budget_plan", "max_tokens_plan"], 13: [], 14: ["thinking_budget_notes"], 15: ["daily_goal"]}
 
 DEFAULT_STUDENTS = [
     {"id": 1, "name": "Byte", "emoji": "🤖", "port": 1001,
@@ -59,6 +59,9 @@ DEFAULT_CONFIG = {
     "class_minutes": 15,              # class timer (bottom-left)
     "question_seconds": 30,           # time to answer one question, then it moves on
     "question_interval_seconds": 10,  # a new question card arrives every N seconds, for the whole class
+    "warm_cards": 5,                  # questions written before class (after the notes), so Start is instant
+    "more_ahead": 3,                  # extra class notes written ahead (by 2-3 free students) for the More notes button
+    "sticky_max": 20,                 # sticky notes: 12 on the board, the + note adds more up to this
     "first_questions": 2,             # cards that arrive right at the start, so there's something to answer
     "max_visible": 9,                 # at most this many question cards on screen at once
     "hidden_ahead": 10,               # cards written ahead and kept hidden; one appears instantly when a slot frees up
@@ -104,10 +107,18 @@ DEFAULT_CONFIG = {
     "questions_per_batch": 10,
     "max_questions_per_student": 150,
     "timeout_seconds": 180,
+    # ⚙️ settings tab
+    "calm_mode": False,               # no meteors / zombies / streak cards, less motion
+    "sound": True,
+    "text_size": "M",                 # S / M / L
+    "animations": "full",             # full / less
+    "card_seconds_measured": 12.5,    # average seconds to write one card (incl. rewrites), measured live
+    "daily_goal": 100,                # 🏠 questions a day for the goal ring
 }
 
 QUIZ_SKILLS = ["student_persona", "make_question", "question_types", "judge_answer", "auto_explain", "explain_more",
-               "plan_questions", "study_part", "write_notes"]
+               "plan_questions", "study_part", "write_notes", "review_simple", "proofread_notes", "more_notes",
+               "sticky_more", "sticky_short"]
 SKILL_NAMES = QUIZ_SKILLS + ["persona", "chat_share", "chat_ask_peer", "chat_answer_peer", "chat_reply", "teacher_reply",
                "teacher_asks_me",
                "ask_teacher", "react", "react_correct", "react_partly", "react_wrong"]
@@ -133,6 +144,16 @@ def load_config():
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:   # write back so new settings are visible
         json.dump(cfg, f, indent=2)
     return cfg
+
+
+def save_config(cfg):
+    """Write the settings back to config.json (only known keys)."""
+    out = {k: cfg[k] for k in DEFAULT_CONFIG if k in cfg}
+    out["config_version"] = CONFIG_VERSION
+    tmp = CONFIG_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(out, f, indent=2, ensure_ascii=False)
+    os.replace(tmp, CONFIG_PATH)
 
 
 # ------------------------------------------------------------------ skills
@@ -359,6 +380,33 @@ def clean_planned(line):
     return q
 
 
+QUESTION_YES_NO = re.compile(r"^(can|is|are|am|do|does|did|will|would|should|could|has|have|had|was|were|isn'?t|aren'?t|don'?t)\b", re.I)
+QUESTION_SOURCE = re.compile(r"\s*,?\s*\b(according to|as (said|written|shown|mentioned) in|mentioned in|listed in|given in|"
+                             r"described in|from|in) (the|this|my|your|our) (text|notes?|lesson|passage|slides?|textbook|book)\b", re.I)
+QUESTION_META = re.compile(r"\b(the|this|my|your) (text|notes?|passage|slides?|textbook)\b|\banything else\b|\bmentioned\b|"
+                           r"\b(wait|let me|i think|not sure)\b", re.I)
+
+
+def fix_question(q):
+    """A planned question, cleaned so a child can understand it on its own. None = throw it away.
+    'What does X mean according to the text?' -> 'What does X mean?'; yes/no and meta questions are dropped."""
+    q = clean_planned(q or "")
+    q = re.sub(r"\b(are|is) (listed|mentioned|given|described|shown|named|written) (in|from) (the|this|my|your) "
+               r"(text|notes?|lesson|passage|slides?|textbook|book)\b", r"\1 there", q, flags=re.I)
+    q = QUESTION_SOURCE.sub("", q).strip()
+    if re.search(r"\b(are|is|was|were|does|do)\s*\?$", q, re.I):
+        return None                                        # cutting "in the text" left a broken question
+    q = re.sub(r"\s+\?", "?", q)
+    if not q.endswith("?") or len(q) < 10 or q.count("?") > 1:
+        return None                                        # two questions in one, or not a question
+    if QUESTION_YES_NO.match(re.sub(r"\*\*|__", "", q)) or QUESTION_META.search(q):
+        return None
+    if re.match(r"^(what|how|why) would happen if\b", q, re.I) and \
+            re.search(r"\b(which|what|who|where|when|how)\b", q[18:], re.I):
+        return None                                        # "What would happen if ... which sector?" makes no sense
+    return q[0].upper() + q[1:]
+
+
 def norm_q(q):
     return re.sub(r"[^a-z0-9 ]", "", q.lower()).strip()
 
@@ -531,8 +579,8 @@ class Engine:
         added = 0
         out = (out or "").rsplit("</think>", 1)[-1] if "</think>" in (out or "") else ("" if "<think>" in (out or "") else out)
         for line in (out or "").splitlines():
-            q = clean_planned(line)
-            if not q.endswith("?") or len(q) < 8 or norm_q(q) in seen:
+            q = fix_question(line)
+            if not q or norm_q(q) in seen:
                 continue
             seen.add(norm_q(q))
             bank["questions"].append({"q": q, "asked": 0, "results": []})
@@ -563,6 +611,14 @@ class Engine:
     def _take_question(self, sid):
         with self._bank_lock(sid):
             bank = self._load_bank(sid)
+            for q in bank["questions"]:                    # old banks: tidy (or retire) confusing questions
+                if not q["asked"] and not q.get("checked"):
+                    fixed = fix_question(q["q"])
+                    q["checked"] = True
+                    if fixed:
+                        q["q"] = fixed
+                    else:
+                        q["asked"] = 99
             unasked = [q for q in bank["questions"] if not q["asked"]]
             if not unasked:
                 self._plan_questions(sid, bank)
@@ -685,6 +741,7 @@ class Engine:
     def _log(self, record):
         if not self.log_path:
             return
+        record = dict(record, t=round(time.time(), 1))     # 🏠 live stats: when it happened
         try:
             with open(self.log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")

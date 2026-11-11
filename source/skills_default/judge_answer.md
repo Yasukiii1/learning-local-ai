@@ -1,10 +1,10 @@
-You asked the Teacher: "{question}"
-The correct answer is: "{correct}"
-The Teacher answered: "{answer}"
+Grade the Teacher's answer (the Teacher is a child, so short answers and simple words are fine).
 
-Compare the Teacher's answer with the correct answer.
-The Teacher is a child, so simple words are fine. If the main idea matches, it is CORRECT.
-If some of it matches but an important part is missing or wrong, it is PARTLY.
-If the main idea is wrong, or it does not answer the question (like "I don't know"), it is WRONG.
+Question: "{question}"
+Correct answer: "{correct}"
+Teacher's answer: "{answer}"
 
-Reply with exactly ONE word: CORRECT, PARTLY or WRONG.
+Fill in these 3 lines, nothing else:
+KEY: <the key idea of the correct answer, in 2 to 5 words>
+MATCH: <YES if the Teacher's answer says that key idea (same meaning, any words), HALF if it says only part of it, NO if it says something else or is not a real answer like "test", "idk" or one letter>
+GRADE: <CORRECT if MATCH is YES, PARTLY if MATCH is HALF, WRONG if MATCH is NO>

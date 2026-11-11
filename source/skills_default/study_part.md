@@ -30,4 +30,13 @@ Rules:
 - Key points: one fact per line, in simple words a child understands, most important first. **Bold** the key word
   of each point (1-3 words).
 - Questions: a child can answer each one using ONLY your key points. No yes/no questions.
+- When the text gives a word and its meaning (often written "Word: meaning"), keep them together exactly as the
+  text pairs them. Never move a meaning to a different word.
+- Every key point must make sense on its own: name the thing it is about. Never start a key point with "It",
+  "They", "This" or "These" (write "**Opportunity cost** is ..." not "It is ...").
+- Only write facts you are sure of. Never write your thinking ("wait", "let me check", "maybe", "this likely
+  means"). If a part is unclear, leave it out.
+- Questions: never yes/no questions, and never say "the text" or "the notes" in a question.
+- Spelling and grammar: check every word is spelled correctly (copy lesson words exactly as the text spells them)
+  and every sentence is complete and makes sense. Fix any mistake before you finish.
 - Use ONLY what the text says. Nothing from outside the text. Never make up numbers, names or dates.

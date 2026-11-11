@@ -51,7 +51,7 @@ Do these steps inside the extracted `Learning-Local-AI` folder.
 | **4** | Double-click **`AI-Classroom.exe`**. |
 | **5** | Click **☰** (top-left), then **📚 Lessons**. Upload a file or paste text (try the files in `sample_lessons`), click the lesson, and press **✓ Select**. |
 
-The students read the lesson (about 15–30 seconds), then the class starts by itself. Type your answers at the bottom and press **Enter**.
+The students read the lesson (about 15–30 seconds), then the **Class** tab opens. Read the class notes and the sticky notes, then press **Start class** (or **Enter**) when you're ready. Type your answers at the bottom and press **Enter**.
 
 📘 **Need more detail on the 5 student models?** See **[SETUP_STUDENTS.md](SETUP_STUDENTS.md)**.
 
@@ -59,13 +59,29 @@ When you're done, double-click **`stop_students.bat`** to free up your graphics 
 
 ---
 
+## ✨ New in v1.1
+
+- **Class lobby:** before class, the Class tab shows a chalkboard with the lesson and a **Start class** button, so you can read first.
+- **📒 Class notes:** the 5 students write combined notes for the whole class, with tidy blocks (big idea, key points, key words, steps, formulas, examples, "watch out"). They also add a ★ quick recap. Open one section at a time and press **Got it · next**.
+- **＋ More notes:** ask for extra sections about ideas the notes don't cover yet. Free students write a few ahead, so they appear after a short loading bar. Extra sections stay until you delete them (🗑, click twice).
+- **🗒 Sticky notes:** key words to learn, as flip cards. Say the meaning, then click to check. The meanings are short (3–7 key words) with the important words in **bold**. The see-through **＋** note adds 2 more, up to 20.
+- **Card deal:** pressing Start shuffles the sticky notes into the question counter.
+- **Faster:** answers are marked in about a second. Explanations are written while you're still answering, and the first questions are written before class starts.
+- **Better questions:** for 🔘 Pick one, the student names the right answer and the app shuffles the options itself. Before, the wrong option could get ticked. Cards with two right options are thrown away.
+- **Spelling and grammar:** every instruction now ends with a spelling and grammar check, and the notes get an extra proofread.
+- **🏠 Home** dashboard and **📝 Review** tab: missed, timed-out and ⭐ starred questions to practise again.
+
+---
+
 ## 🏫 How the class works
 
+- **Before class:** read the 📒 class notes (right) and test yourself with the 🗒 sticky notes (bottom left). Press **Start class** when you're ready.
 - A new **question card** arrives every 10 seconds, and up to 9 are on screen. You have **30 seconds** for each one.
 - After you answer, the right panel shows the answer, whether you were **✅ correct**, **🤏 partly right** or **❌ not quite**, and a **📖 explanation**.
 - Still confused? Press **🤔 Still confused?** for an even simpler explanation (up to 2 more).
+- Press **☆** to star a question and practise it again later in **📝 Review**.
 - The students only ask about **your lesson**. Questions that use things outside the lesson are thrown away.
-- While you play, the students write **simple notes** about the lesson in the 📚 Lessons tab, with the **key words in bold**.
+- Students with nothing to do help the others: they write the next questions, explanations, extra notes and sticky notes in the background.
 
 **Card types:** 🧠 Explain why · 🔀 What if… · ⚖️ Compare · ✍️ Fill the blank · 🔘 Pick one · 🕵️ Spot the mistake · ⚡ Lightning (10 s) · 🗳️ Who's right?
 
@@ -106,9 +122,9 @@ The app creates these folders by itself, next to the exe:
 
 | Folder / file | What's inside |
 |---|---|
-| `lessons/` | your lessons, the students' plans and notes |
+| `lessons/` | your lessons, the students' plans, class notes and sticky notes |
 | `sessions/` | a log of every class, plus questions you ran out of time on |
-| `skills/` | the instructions the students follow (edit them with the ⚙ button) |
+| `skills/` | the instructions the students follow (plain `.md` files you can edit with Notepad). When an update brings new instructions, your old copies are kept in `skills/old/` |
 | `logs/` | app and student logs |
 | `config.json` | settings such as class length, seconds per question and student names |
 
